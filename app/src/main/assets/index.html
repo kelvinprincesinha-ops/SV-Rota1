@@ -271,6 +271,18 @@ async function calculate(fit){
     }
    }catch(e){console.warn('Traffic routing unavailable',e)}
   }
+  // TomTom may return route geometry without guidance; use OSRM turn-by-turn steps as a fallback.
+  if(json?.routes?.length&&!json.routes[0].legs?.some(l=>l.steps?.some(s=>s.maneuver?.instruction||s.maneuver?.type!=='tomtom'))){
+   try{
+    const osrmUrl='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=true';
+    const osrmResponse=await fetch(osrmUrl);
+    if(osrmResponse.ok){
+     const osrmData=await osrmResponse.json();
+     const fallbackSteps=osrmData.routes?.[0]?.legs?.flatMap(l=>l.steps||[])||[];
+     if(fallbackSteps.length>1){json.routes[0].legs=[{steps:fallbackSteps}];console.info('Using OSRM maneuver guidance with TomTom traffic route')}
+    }
+   }catch(e){console.warn('Maneuver fallback unavailable',e)}
+  }
   if(!json){
    const url='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=true&alternatives=3';
    const res=await fetch(url);if(!res.ok)throw Error('Roteador indisponível');
@@ -295,12 +307,19 @@ async function calculate(fit){
 }
 function guide(force=false){
  if(!navigating||!pos||!steps.length)return;
- while(nextStep<steps.length-1&&distance(pos,[steps[nextStep].maneuver.location[1],steps[nextStep].maneuver.location[0]])<25)nextStep++;
- const step=steps[nextStep],point=[step.maneuver.location[1],step.maneuver.location[0]],meters=Math.round(distance(pos,point));
+ const valid=s=>Array.isArray(s?.maneuver?.location)&&s.maneuver.location.length===2&&s.maneuver.location.every(Number.isFinite);
+ while(nextStep<steps.length-1&&(!valid(steps[nextStep])||distance(pos,[steps[nextStep].maneuver.location[1],steps[nextStep].maneuver.location[0]])<35))nextStep++;
+ const step=steps[nextStep];if(!valid(step))return;
+ const point=[step.maneuver.location[1],step.maneuver.location[0]],meters=Math.round(distance(pos,point));
  const type=step.maneuver.type,modifier=step.maneuver.modifier||'';
  const action=type==='tomtom'?(step.maneuver.instruction||'Continue pela rota'):type==='arrive'?'Você chegou ao destino':type==='depart'?'Siga em frente':type==='roundabout'?'Entre na rotatória':modifier.includes('uturn')?'Faça o retorno':modifier.includes('left')?'Vire à esquerda':modifier.includes('right')?'Vire à direita':'Continue em frente';
- const message=type==='arrive'?action:(type==='tomtom'?action+' • '+meters+' m':action+' em aproximadamente '+meters+' metros');
- const navText=document.getElementById('nav-guidance');if(navText)navText.textContent=message;const el=document.getElementById('instruction');if(el)el.textContent=message+(trafficActive?' • TomTom conectado':' • Trânsito não confirmado');
- if(force||(nextStep!==lastSpoken&&meters<180)){speak(message);lastSpoken=nextStep}
+ const road=type==='tomtom'?'':(step.name||'').trim();
+ const direction=road&&type!=='arrive'&&type!=='depart'&&type!=='roundabout'?action+' na '+road:action;
+ const message=type==='arrive'?direction:(type==='tomtom'?direction+' • '+meters+' m':direction+' em aproximadamente '+meters+' metros');
+ const navText=document.getElementById('nav-guidance');if(navText)navText.textContent=message;
+ const el=document.getElementById('instruction');if(el)el.textContent=message+(trafficActive?' • TomTom conectado':' • Trânsito não confirmado');
+ const threshold=meters<=80?80:meters<=250?250:meters<=600?600:null;
+ const spokenKey=nextStep+':'+(threshold||'far');
+ if((force||threshold!==null)&&spokenKey!==lastSpoken){speak(message);lastSpoken=spokenKey}
 }
 </script></body></html>
