@@ -13,6 +13,8 @@ import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
+import android.speech.tts.TextToSpeech;
+import java.util.Locale;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewAssetLoader.AssetsPathHandler;
 import androidx.webkit.WebViewAssetLoader;
@@ -24,6 +26,8 @@ import android.webkit.WebResourceResponse;
 public class MainActivity extends Activity {
     private WebView web;
     private LocationManager locations;
+    private TextToSpeech tts;
+    private boolean voiceReady=false;
     private final LocationListener listener = location -> {
         double lat = location.getLatitude(), lon = location.getLongitude();
         runOnUiThread(() -> {
@@ -32,6 +36,11 @@ public class MainActivity extends Activity {
     };
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        tts = new TextToSpeech(this, result -> {
+            if (result == TextToSpeech.SUCCESS) {
+                voiceReady = tts.setLanguage(new Locale("pt", "BR")) >= 0;
+            }
+        });
         web = new WebView(this);
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setDomStorageEnabled(true);
@@ -40,6 +49,15 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Object() {
             @JavascriptInterface public void requestLocation() {
                 runOnUiThread(() -> startGps());
+            }
+            @JavascriptInterface public void speak(String message) {
+                runOnUiThread(() -> {
+                    if (tts != null && voiceReady) tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, "svrota-instruction");
+                    else Toast.makeText(MainActivity.this, "Voz do Android indisponível", Toast.LENGTH_SHORT).show();
+                });
+            }
+            @JavascriptInterface public void stopSpeaking() {
+                runOnUiThread(() -> { if(tts != null) tts.stop(); });
             }
         }, "SVRota");
         WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
@@ -77,6 +95,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         if (locations != null) locations.removeUpdates(listener);
+        if (tts != null) { tts.stop(); tts.shutdown(); }
         if (web != null) web.destroy();
         super.onDestroy();
     }
