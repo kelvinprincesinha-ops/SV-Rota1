@@ -74,7 +74,7 @@ function exitNavigation(clearDestination=false){
  document.getElementById('report-menu').style.display='none';
  summary.style.display='none';
  document.getElementById('road-alert').textContent='';
- if(clearDestination){target=null;destinationName='';route=null;steps=[];routeChoices=[];if(targetMarker){targetMarker.remove();targetMarker=null}for(const id of ['sv-route-line','sv-route-border'])if(map.getLayer(id))map.removeLayer(id);if(map.getSource('sv-route'))map.removeSource('sv-route');}
+ if(clearDestination){searchSeq++;clearTimeout(searchTimer);searchResults=[];selectedAddress=null;dest.value='';hideSuggestions();target=null;destinationName='';route=null;steps=[];routeChoices=[];if(targetMarker){targetMarker.remove();targetMarker=null}for(const id of ['sv-route-line','sv-route-border'])if(map.getLayer(id))map.removeLayer(id);if(map.getSource('sv-route'))map.removeSource('sv-route');}
  if(pos)map.easeTo({center:[pos[1],pos[0]],zoom:15,pitch:40,bearing:0,duration:650});
  info('Navegação encerrada. Digite outro destino ou toque em Minha posição.');
 }
@@ -198,7 +198,7 @@ async function fetchSuggestions(query){
   searchResults=(data.results||[]).filter(x=>x.position&&Number.isFinite(x.position.lat)&&Number.isFinite(x.position.lon)&&x.address);
   renderSuggestions(searchResults);
   info(searchResults.length?'Escolha o endereço correto na lista.':'Nenhum endereço encontrado. Tente incluir cidade e estado.');
- }catch(e){if(seq!==searchSeq)return;renderSuggestions([],'Busca TomTom indisponível. Confira sua chave e conexão.');info('Falha na busca TomTom. Verifique sua chave e internet.');console.warn('TomTom Search',e)}
+ }catch(e){if(seq!==searchSeq)return;renderSuggestions([],'Busca de endereços temporariamente indisponível. Tente novamente.');info('Busca de endereços indisponível. Verifique a conexão com o servidor.');console.warn('TomTom Search',e)}
 }
 dest.addEventListener('input',()=>{
  selectedAddress=null;searchSeq++;clearTimeout(searchTimer);searchResults=[];
