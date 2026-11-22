@@ -21,6 +21,7 @@ small{display:block;font-size:11px;color:#d3dce4;margin-top:5px}
 <script>
 const status=document.getElementById('status'), summary=document.getElementById('summary'), dest=document.getElementById('dest');
 let pos=null, target=null, currentMarker=null, targetMarker=null, routeLayer=null, mode='car', lastRouteAt=0;
+let navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,calculating=false,lastRecalcPos=null;
 const map=L.map('map',{zoomControl:false}).setView([-23.963,-46.391],13);
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
@@ -29,10 +30,13 @@ window.onNativeLocation=(lat,lon)=>{
   pos=[lat,lon];
   if(!currentMarker){currentMarker=L.circleMarker(pos,{radius:9,color:'#fff',weight:3,fillColor:'#008cf0',fillOpacity:1}).addTo(map);map.setView(pos,15)}
   else currentMarker.setLatLng(pos);
+  if(follow && navigating) map.panTo(pos,{animate:true});
+  if(navigating && steps.length) guide();
   if(!target) info('GPS ativo. Digite seu destino.');
-  else if(Date.now()-lastRouteAt>25000) calculate(false);
+  else if(navigating && Date.now()-lastRouteAt>30000 && lastRecalcPos && map.distance(pos,lastRecalcPos)>100) calculate(false);
 };
-document.getElementById('gps').onclick=()=>{if(pos)map.setView(pos,16);else {info('Solicitando GPS…');SVRota.requestLocation()}};
+document.getElementById('gps').onclick=()=>{follow=true;if(pos)map.setView(pos,17);else {info('Solicitando GPS…');SVRota.requestLocation()}};
+map.on('dragstart',()=>{follow=false});
 document.getElementById('car').onclick=()=>selectMode('car');
 document.getElementById('moto').onclick=()=>selectMode('moto');
 function selectMode(m){mode=m;document.getElementById('car').className=m==='car'?'':'alt';document.getElementById('moto').className=m==='moto'?'':'alt';if(target)calculate(true)}
@@ -57,12 +61,15 @@ async function search(){
 }
 async function calculate(fit){
  if(!pos){info('Destino encontrado. Aguardando permissão e sinal GPS…');return}
- lastRouteAt=Date.now();info('Calculando rota…');
+ if(calculating)return;
+ calculating=true;lastRouteAt=Date.now();lastRecalcPos=pos.slice();info('Calculando rota…');
  try{
-  const url='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=false';
+  const url='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=true';
   const res=await fetch(url);if(!res.ok)throw Error('Roteador indisponível');
   const json=await res.json();if(json.code!=='Ok'||!json.routes?.length)throw Error('Sem rota');
   const r=json.routes[0];
+  steps=(r.legs||[]).flatMap(leg=>leg.steps||[]);nextStep=0;lastSpoken=-1;
+  if(navigating)guide();
   if(routeLayer)map.removeLayer(routeLayer);
   routeLayer=L.geoJSON(r.geometry,{style:{color:'#16ad89',weight:7,opacity:.85}}).addTo(map);
   if(fit)map.fitBounds(routeLayer.getBounds(),{paddingTopLeft:[30,225],paddingBottomRight:[30,110]});
@@ -70,8 +77,25 @@ async function calculate(fit){
   const mins=Math.max(1,Math.round(r.duration/60));
   info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro)':'Carro'));
   summary.style.display='block';
-  summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><small>Estimativa sem trânsito ao vivo. Siga as placas e leis de trânsito.</small><button id="refresh" style="margin-top:8px">Atualizar rota</button>';
+  summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><small id="instruction">Estimativa sem trânsito ao vivo. Siga as placas e leis de trânsito.</small><div class="line"><button id="navigate">'+(navigating?'Encerrar navegação':'▶ Iniciar navegação')+'</button><button id="refresh">Atualizar rota</button></div>';
+  document.getElementById('navigate').onclick=()=>{navigating=!navigating;follow=true;document.getElementById('navigate').textContent=navigating?'Encerrar navegação':'▶ Iniciar navegação';if(navigating){map.setView(pos,17);guide(true)}else{speechSynthesis.cancel();info('Navegação encerrada.')}};
   document.getElementById('refresh').onclick=()=>calculate(true);
  }catch(e){info('Serviço de rotas indisponível. Tente novamente.')}
+ finally{calculating=false}
 }
+function speak(message){
+ if(!('speechSynthesis' in window))return;
+ speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(message);u.lang='pt-BR';u.rate=0.95;speechSynthesis.speak(u);
+}
+function guide(force=false){
+ if(!navigating||!pos||!steps.length)return;
+ while(nextStep<steps.length-1 && map.distance(pos,[steps[nextStep].maneuver.location[1],steps[nextStep].maneuver.location[0]])<25)nextStep++;
+ const step=steps[nextStep],point=[step.maneuver.location[1],step.maneuver.location[0]],distance=Math.round(map.distance(pos,point));
+ const type=step.maneuver.type,modifier=step.maneuver.modifier||'';
+ let action=type==='arrive'?'Você chegou ao destino':type==='depart'?'Siga em frente':type==='roundabout'?'Entre na rotatória':modifier.includes('left')?'Vire à esquerda':modifier.includes('right')?'Vire à direita':modifier.includes('uturn')?'Faça o retorno':'Continue em frente';
+ const message=type==='arrive'?action:action+' em aproximadamente '+distance+' metros';
+ const el=document.getElementById('instruction');if(el)el.textContent=message+' • Trânsito ao vivo indisponível';
+ if(force|| (nextStep!==lastSpoken && distance<180)){speak(message);lastSpoken=nextStep}
+}
+
 </script></body></html>
