@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>SV Rota</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,Arial;background:#101c2c;color:white}#map{height:100dvh;width:100%}
+.panel{position:absolute;z-index:1000;top:12px;left:12px;right:12px;background:#15283beF;border:1px solid #365069;border-radius:16px;padding:12px;box-shadow:0 5px 20px #0005}
+h1{font-size:20px;margin:0 0 8px;color:#4de0bd}input{background:#fff;color:#14283a;border:0;border-radius:8px;padding:12px;min-width:0;flex:1;font-size:15px}
+.line{display:flex;gap:6px;margin:7px 0}button{background:#16ad89;color:white;border:0;border-radius:9px;padding:10px 12px;font-weight:700;font-size:14px}
+button.alt{background:#324d66}button:disabled{opacity:.5}#status{font-size:13px;line-height:1.35;color:#e2edf5}
+.bottom{position:absolute;bottom:24px;left:12px;right:12px;z-index:1000;background:#15283bef;border-radius:12px;padding:12px;display:none;box-shadow:0 4px 18px #0007}
+small{display:block;font-size:11px;color:#d3dce4;margin-top:5px}
+.leaflet-control-attribution{font-size:10px!important}
+</style></head>
+<body><div id="map"></div>
+<div class="panel"><h1>📍 SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div>
+<div class="line"><button id="car">🚗 Carro</button><button id="moto" class="alt">🏍️ Moto</button><button id="gps" class="alt">Minha posição</button></div>
+<div id="status">Aguardando localização GPS…</div><small>Protótipo • Moto utiliza rota de carro • Sem trânsito ao vivo</small></div>
+<div id="summary" class="bottom"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const status=document.getElementById('status'), summary=document.getElementById('summary'), dest=document.getElementById('dest');
+let pos=null, target=null, currentMarker=null, targetMarker=null, routeLayer=null, mode='car', lastRouteAt=0;
+const map=L.map('map',{zoomControl:false}).setView([-23.963,-46.391],13);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+function info(s){status.textContent=s}
+window.onNativeLocation=(lat,lon)=>{
+  pos=[lat,lon];
+  if(!currentMarker){currentMarker=L.circleMarker(pos,{radius:9,color:'#fff',weight:3,fillColor:'#008cf0',fillOpacity:1}).addTo(map);map.setView(pos,15)}
+  else currentMarker.setLatLng(pos);
+  if(!target) info('GPS ativo. Digite seu destino.');
+  else if(Date.now()-lastRouteAt>25000) calculate(false);
+};
+document.getElementById('gps').onclick=()=>{if(pos)map.setView(pos,16);else {info('Solicitando GPS…');SVRota.requestLocation()}};
+document.getElementById('car').onclick=()=>selectMode('car');
+document.getElementById('moto').onclick=()=>selectMode('moto');
+function selectMode(m){mode=m;document.getElementById('car').className=m==='car'?'':'alt';document.getElementById('moto').className=m==='moto'?'':'alt';if(target)calculate(true)}
+document.getElementById('search').onclick=search;
+dest.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();search()}});
+async function search(){
+ const q=dest.value.trim();if(q.length<3){info('Digite pelo menos 3 caracteres.');return}
+ info('Procurando endereço…');
+ try{
+  const u='https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q+', São Vicente, São Paulo');
+  let res=await fetch(u,{headers:{'Accept':'application/json'}});
+  if(!res.ok)throw Error('Busca indisponível');
+  let data=await res.json();
+  if(!data.length){const u2='https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q);res=await fetch(u2);data=await res.json()}
+  if(!data.length){info('Endereço não encontrado. Tente rua, número e cidade.');return}
+  target=[Number(data[0].lat),Number(data[0].lon)];
+  if(targetMarker)map.removeLayer(targetMarker);
+  targetMarker=L.marker(target).addTo(map).bindPopup(data[0].display_name).openPopup();
+  map.setView(target,15);
+  calculate(true);
+ }catch(e){info('Não foi possível buscar. Verifique a internet e tente novamente.')}
+}
+async function calculate(fit){
+ if(!pos){info('Destino encontrado. Aguardando permissão e sinal GPS…');return}
+ lastRouteAt=Date.now();info('Calculando rota…');
+ try{
+  const url='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=false';
+  const res=await fetch(url);if(!res.ok)throw Error('Roteador indisponível');
+  const json=await res.json();if(json.code!=='Ok'||!json.routes?.length)throw Error('Sem rota');
+  const r=json.routes[0];
+  if(routeLayer)map.removeLayer(routeLayer);
+  routeLayer=L.geoJSON(r.geometry,{style:{color:'#16ad89',weight:7,opacity:.85}}).addTo(map);
+  if(fit)map.fitBounds(routeLayer.getBounds(),{paddingTopLeft:[30,225],paddingBottomRight:[30,110]});
+  const km=(r.distance/1000).toFixed(1).replace('.',',');
+  const mins=Math.max(1,Math.round(r.duration/60));
+  info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro)':'Carro'));
+  summary.style.display='block';
+  summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><small>Estimativa sem trânsito ao vivo. Siga as placas e leis de trânsito.</small><button id="refresh" style="margin-top:8px">Atualizar rota</button>';
+  document.getElementById('refresh').onclick=()=>calculate(true);
+ }catch(e){info('Serviço de rotas indisponível. Tente novamente.')}
+}
+</script></body></html>
