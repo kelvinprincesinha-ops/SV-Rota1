@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0b2034"><link rel="manifest" href="/manifest.webmanifest">
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0b2034"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icon.svg"><meta name="apple-mobile-web-app-title" content="SV Rota">
 <title>SV Rota</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
@@ -331,4 +331,5 @@ function guide(force=false){
  const spokenKey=nextStep+':'+(threshold||'far');
  if((force||threshold!==null)&&spokenKey!==lastSpoken){speak(message);lastSpoken=spokenKey}
 }
+if('serviceWorker' in navigator && location.protocol==='https:' && !window.SVRota){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
 </script></body></html>
