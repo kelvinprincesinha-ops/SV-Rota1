@@ -1,15 +1,26 @@
 import http from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {resolve,dirname} from 'node:path';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const PORT=Number(process.env.PORT||3000);
 const API='https://api.tomtom.com';
 const buckets=new Map();
 function allowed(ip,isTile){const now=Date.now(),key=(isTile?'tile:':'api:')+ip,entry=buckets.get(key)||{count:0,reset:now+60000};if(now>entry.reset){entry.count=0;entry.reset=now+60000}entry.count++;buckets.set(key,entry);if(buckets.size>10000)for(const [k,v] of buckets)if(now>v.reset)buckets.delete(k);return entry.count<=Number(isTile?(process.env.TILE_RATE_LIMIT_PER_MINUTE||600):(process.env.RATE_LIMIT_PER_MINUTE||90))}
 const coord=(x,max)=>x!==null&&x!==''&&Number.isFinite(Number(x))&&Math.abs(Number(x))<=max;
+const sendManifest=res=>{res.writeHead(200,{'Content-Type':'application/manifest+json; charset=utf-8','Cache-Control':'public,max-age=3600'});res.end(JSON.stringify({name:'SV Rota',short_name:'SV Rota',start_url:'/app',scope:'/',display:'standalone',background_color:'#0b2034',theme_color:'#0b2034',description:'Navegação SV Rota para iPhone e Android'}))};
 const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify(body))};
 http.createServer(async(req,res)=>{
  const u=new URL(req.url||'/', 'http://localhost');
  if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,OPTIONS'});return res.end()}
  if(req.method!=='GET')return send(res,405,{error:'method_not_allowed'});
  if(u.pathname==='/health')return send(res,200,{status:'ok',service:'SV Rota1',trafficConfigured:!!process.env.TOMTOM_API_KEY});
+ if(u.pathname==='/'||u.pathname==='/app'||u.pathname==='/app/'){
+  try{const html=await readFile(resolve(root,'app/src/main/assets/index.html'));res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});return res.end(html)}catch(e){return send(res,503,{error:'web_app_unavailable'})}
+ }
+ if(u.pathname==='/manifest.webmanifest')return sendManifest(res);
+ if(u.pathname==='/sw.js'){res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-cache'});return res.end("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));")}
+
  if(!u.pathname.startsWith('/api/'))return send(res,404,{error:'not_found'});
  if(!process.env.TOMTOM_API_KEY)return send(res,503,{error:'traffic_service_not_configured'});
  const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim();
