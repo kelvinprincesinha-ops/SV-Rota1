@@ -2,7 +2,7 @@ import http from 'node:http';
 const PORT=Number(process.env.PORT||3000);
 const API='https://api.tomtom.com';
 const buckets=new Map();
-function allowed(ip){const now=Date.now(),entry=buckets.get(ip)||{count:0,reset:now+60000};if(now>entry.reset){entry.count=0;entry.reset=now+60000}entry.count++;buckets.set(ip,entry);if(buckets.size>10000)for(const [k,v] of buckets)if(now>v.reset)buckets.delete(k);return entry.count<=Number(process.env.RATE_LIMIT_PER_MINUTE||90)}
+function allowed(ip,isTile){const now=Date.now(),key=(isTile?'tile:':'api:')+ip,entry=buckets.get(key)||{count:0,reset:now+60000};if(now>entry.reset){entry.count=0;entry.reset=now+60000}entry.count++;buckets.set(key,entry);if(buckets.size>10000)for(const [k,v] of buckets)if(now>v.reset)buckets.delete(k);return entry.count<=Number(isTile?(process.env.TILE_RATE_LIMIT_PER_MINUTE||600):(process.env.RATE_LIMIT_PER_MINUTE||90))}
 const coord=(x,max)=>x!==null&&x!==''&&Number.isFinite(Number(x))&&Math.abs(Number(x))<=max;
 const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify(body))};
 http.createServer(async(req,res)=>{
@@ -13,7 +13,8 @@ http.createServer(async(req,res)=>{
  if(!u.pathname.startsWith('/api/'))return send(res,404,{error:'not_found'});
  if(!process.env.TOMTOM_API_KEY)return send(res,503,{error:'traffic_service_not_configured'});
  const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim();
- if(!allowed(ip))return send(res,429,{error:'rate_limited'});
+ const isTile=/^\/api\/traffic\/(flow|incidents)\/\d{1,2}\/\d+\/\d+\.png$/.test(u.pathname);
+ if(!allowed(ip,isTile))return send(res,429,{error:'rate_limited',category:isTile?'traffic_tiles':'api_requests'});
  let upstream;
  if(u.pathname==='/api/traffic/check'){
   if(!coord(u.searchParams.get('lat'),90)||!coord(u.searchParams.get('lon'),180))return send(res,400,{error:'invalid_coordinates'});
