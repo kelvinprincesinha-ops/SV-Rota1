@@ -89,6 +89,34 @@ function chooseVehicle(type){vehicleIcon=type;localStorage.setItem('sv-vehicle-i
 for(const t of ['arrow','car','moto'])document.getElementById('icon-'+t).onclick=()=>chooseVehicle(t);
 chooseVehicle(vehicleIcon);
 function cameraFollow(){if(!pos||!follow||!mapReady)return;const opts={center:[pos[1],pos[0]],zoom:navigating?17.7:16.5,pitch:navigating?65:48,bearing:navigating?heading:0,padding:navigating?{top:100,bottom:260,left:0,right:0}:{top:0,bottom:0,left:0,right:0}};map.jumpTo(opts)}
+// Detect sustained deviations from the actual route, rather than recalculating just because the car moved.
+let offRouteFixes=0,lastOffRouteRecalc=0;
+function metersFromRoute(point){
+ const coords=route?.geometry?.coordinates;
+ if(!Array.isArray(coords)||coords.length<2)return Infinity;
+ const latRad=point[0]*Math.PI/180,scaleX=111320*Math.cos(latRad),scaleY=111320;
+ let nearest=Infinity;
+ for(let i=1;i<coords.length;i++){
+  const a=coords[i-1],b=coords[i];
+  const ax=(a[0]-point[1])*scaleX,ay=(a[1]-point[0])*scaleY;
+  const bx=(b[0]-point[1])*scaleX,by=(b[1]-point[0])*scaleY;
+  const dx=bx-ax,dy=by-ay,denom=dx*dx+dy*dy;
+  const t=denom?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/denom)):0;
+  nearest=Math.min(nearest,Math.hypot(ax+t*dx,ay+t*dy));
+ }
+ return nearest;
+}
+function checkRouteDeviation(){
+ if(!navigating||!target||!route||calculating){offRouteFixes=0;return}
+ const deviation=metersFromRoute(pos);
+ // Ignore normal GPS drift. Three consecutive fixes beyond 45 m confirm a shortcut.
+ offRouteFixes=deviation>45?offRouteFixes+1:0;
+ if(offRouteFixes>=3&&Date.now()-lastOffRouteRecalc>12000){
+  offRouteFixes=0;lastOffRouteRecalc=Date.now();
+  info('Fora da rota. Recalculando caminho…');
+  calculate(false);
+ }
+}
 window.onNativeLocation=(lat,lon,bearing,speed)=>{
  if(!Number.isFinite(Number(lat))||!Number.isFinite(Number(lon))||Math.abs(Number(lat))>90||Math.abs(Number(lon))>180)return;
  const previous=pos,now=Date.now();pos=[Number(lat),Number(lon)];
@@ -105,12 +133,13 @@ window.onNativeLocation=(lat,lon,bearing,speed)=>{
  else marker.setLngLat([pos[1],pos[0]]);
  marker.setRotation(heading);
  if(follow)cameraFollow();
+ if(navigating)checkRouteDeviation();
  if(navigating&&steps.length)guide();
  if(navigating)updateRemainingDistance();
  if(navigating&&target&&Date.now()-lastTrafficReroute>180000&&!calculating){lastTrafficReroute=Date.now();calculate(false)};
  checkRadarAlerts();if(!radarFetchPos||distance(pos,radarFetchPos)>4500||Date.now()-radarLastFetch>900000)loadRoadData();
  if(!target)info('GPS ativo. Digite seu destino.');
- else if(navigating&&!calculating&&Date.now()-lastRouteAt>30000&&lastRecalcPos&&distance(pos,lastRecalcPos)>100)calculate(false);
+ // Off-route recalculation is handled by checkRouteDeviation().
 };
 document.getElementById('traffic-indicator').onclick=()=>{trafficRetryCount=0;initTraffic()};
 function scheduleTrafficRetry(){clearTimeout(trafficRetryTimer);const delay=Math.min(120000,5000*Math.pow(2,Math.min(trafficRetryCount++,4)));trafficRetryTimer=setTimeout(()=>{if(navigator.onLine!==false)initTraffic();else scheduleTrafficRetry()},delay)}
