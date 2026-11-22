@@ -1,0 +1,1 @@
+{"name":"sv-rota1-server","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node server/railway.js"},"engines":{"node":">=20"}}
