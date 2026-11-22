@@ -19,7 +19,7 @@ button.alt{background:#eef3f8;color:#33485c}button:disabled{opacity:.5}
 @media(max-width:380px){.panel{padding:10px}.panel button{padding:10px 8px;font-size:12px}.panel input{padding:10px}.bottom{padding:13px}}
 .panel{background:#0b2034ee;color:#fff;border-color:#27689d;padding:10px}.panel h1{color:#5bc2ff;font-size:19px}.panel input{background:#20364b;color:#fff}.panel small,#status{color:#b6cee0!important}.panel .line{margin:5px 0}.panel button{padding:9px}.bottom{background:#0b2034f2;color:#fff;border-color:#2478b4;padding:12px}.bottom small{color:#b5d1e7}.vehicle-icon,.vehicle-icon svg{width:62px;height:72px}.panel.collapsed .line,.panel.collapsed .vehicle-picker,.panel.collapsed #status,.panel.collapsed small{display:none}.panel.collapsed{right:auto}.panel h1{cursor:pointer}.light-info{position:absolute;right:14px;top:45%;z-index:999;background:#0b2034ed;color:#fff;border:1px solid #2778b3;border-radius:12px;padding:8px;font-size:12px;display:none}.speedometer{position:absolute;z-index:999;left:12px;bottom:190px;background:#0a1e32ee;border:2px solid #1aa2ff;color:#fff;border-radius:50%;width:92px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 18px #0008}.speedometer strong{font-size:31px;line-height:1}.speedometer small{font-size:13px}.report-toggle{position:absolute;z-index:999;right:12px;bottom:190px;border-radius:50%;font-size:23px}.report-menu{position:absolute;z-index:999;right:12px;bottom:250px;background:#0a1e32f5;border:1px solid #259cfa;border-radius:14px;padding:8px;display:none;max-width:230px}.report-menu button{display:block;width:100%;text-align:left;margin:3px 0;background:#203e5b}.report-menu small{color:#d4e7fa}.speedometer.inactive{opacity:.65}.road-alert{position:absolute;z-index:999;left:110px;bottom:195px;background:#10263df2;color:#fff;border:1px solid #4bb5ff;border-radius:12px;padding:8px;font-size:12px;max-width:190px}.road-alert:empty{display:none}.route-options{display:flex;gap:6px;overflow-x:auto;margin-top:5px}.route-options button{font-size:11px;padding:7px;white-space:nowrap}.radar-marker{background:#fff;border:3px solid #d52d2d;border-radius:50%;padding:5px;font-size:19px;box-shadow:0 2px 8px #0008}.radar-marker:after{content:'📷'}.traffic-config{position:absolute;z-index:1001;left:12px;right:12px;top:12%;background:#102b43;color:white;padding:16px;border-radius:18px;display:none;box-shadow:0 8px 35px #0009}.traffic-config input{width:100%;margin:8px 0}.traffic-config small{color:#c6d9ed}.traffic-indicator{position:absolute;z-index:998;left:12px;bottom:295px;background:#0d2639ed;color:white;border-radius:10px;padding:7px;font-size:12px}.bottom .line{flex-wrap:wrap}.bottom .line button{flex:1 1 40%;min-width:0}.bottom #cancel-route{flex-basis:100%}.remaining-distance{font-size:17px;font-weight:800;color:#69d2ff;margin-top:6px}#suggestions{display:none;max-height:245px;overflow-y:auto;background:#f7fbff;color:#17334a;border-radius:13px;margin-top:3px;box-shadow:0 5px 15px #0004}#suggestions button{display:block;width:100%;text-align:left;background:transparent;color:#17334a;box-shadow:none;border-radius:0;border-bottom:1px solid #dce7f0;padding:11px}#suggestions button:focus,#suggestions button:active{background:#d9edff}#suggestions small{display:block;color:#536b7c!important;font-size:12px;margin-top:3px}#suggestions .empty{padding:12px;font-size:13px}
 /* Navegação compacta */
-body.nav-active .panel{display:none}body.nav-active .bottom{bottom:0;left:0;right:0;border-radius:24px 24px 0 0;padding:18px 12px calc(18px + env(safe-area-inset-bottom,0px));background:#101b2bf5}body.nav-active .bottom .route-options{display:none}body.nav-active .traffic-indicator,body.nav-active .light-info,body.nav-active .road-alert{display:none!important}body.nav-active .speedometer{bottom:145px}body.nav-active .report-toggle{bottom:155px}body.nav-active .bottom .line{display:none}.nav-controls{position:absolute;z-index:1100;right:14px;top:calc(env(safe-area-inset-top,0px) + 18px);display:none;gap:10px;flex-direction:column}.nav-controls button{border-radius:50%;width:54px;height:54px;font-size:24px;background:#122337f2;border:2px solid #389de8;color:white}.nav-controls button.muted{border-color:#718091;color:#a8b7c6}.nav-controls .danger{background:#e62e49;border-color:#f56779}body.nav-active .nav-controls{display:flex}.nav-compact{display:flex;align-items:center;justify-content:space-between;gap:9px}.nav-compact button{border-radius:50%;width:49px;height:49px;flex-shrink:0;font-size:22px;padding:0}.nav-compact .danger{background:#eb294b}.nav-eta{text-align:center;min-width:0;flex:1}.nav-eta strong{display:block;font-size:24px}.nav-eta small{font-size:12px;margin:3px 0;color:#c2d8ea}.nav-guidance{position:absolute;z-index:999;left:12px;right:80px;top:calc(env(safe-area-inset-top,0px) + 16px);background:#101b2bf2;color:white;border-radius:18px;padding:14px;display:none;max-width:420px;font-weight:700;font-size:18px}body.nav-active .nav-guidance{display:block}.panel.editing{display:block!important;right:12px;z-index:1200}body.nav-active .panel.editing .line,body.nav-active .panel.editing .vehicle-picker,body.nav-active .panel.editing #status{display:flex}body.nav-active .panel.editing #suggestions{display:block}
+body.nav-active .panel{display:none}body.nav-active .bottom{bottom:0;left:0;right:0;border-radius:24px 24px 0 0;padding:18px 12px calc(18px + env(safe-area-inset-bottom,0px));background:#101b2bf5}body.nav-active .bottom .route-options{display:none}body.nav-active .traffic-indicator,body.nav-active .light-info,body.nav-active .road-alert{display:none!important}body.nav-active .speedometer{bottom:145px}body.nav-active .report-toggle{bottom:155px}body.nav-active .bottom .line{display:none}.nav-controls{position:absolute;z-index:1100;right:14px;top:calc(env(safe-area-inset-top,0px) + 18px);display:none;gap:10px;flex-direction:column}.nav-controls button{border-radius:50%;width:54px;height:54px;font-size:24px;background:#122337f2;border:2px solid #389de8;color:white}.nav-controls button.muted{border-color:#718091;color:#a8b7c6}.nav-controls .danger{background:#e62e49;border-color:#f56779}body.nav-active .nav-controls{display:flex}body.nav-active #nav-cancel{display:none}body.nav-active .nav-guidance{right:85px}.nav-compact{display:flex;align-items:center;justify-content:space-between;gap:9px}.nav-compact button{border-radius:50%;width:49px;height:49px;flex-shrink:0;font-size:22px;padding:0}.nav-compact .danger{background:#eb294b}.nav-eta{text-align:center;min-width:0;flex:1}.nav-eta strong{display:block;font-size:24px}.nav-eta small{font-size:12px;margin:3px 0;color:#c2d8ea}.nav-guidance{position:absolute;z-index:999;left:12px;right:80px;top:calc(env(safe-area-inset-top,0px) + 16px);background:#101b2bf2;color:white;border-radius:18px;padding:14px;display:none;max-width:420px;font-weight:700;font-size:18px}body.nav-active .nav-guidance{display:block}.panel.editing{display:block!important;right:12px;z-index:1200}body.nav-active .panel.editing .line,body.nav-active .panel.editing .vehicle-picker,body.nav-active .panel.editing #status{display:flex}body.nav-active .panel.editing #suggestions{display:block}
 </style></head>
 <body><div id="map"></div>
 <div class="panel"><h1>↗ SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div><div id="suggestions" role="listbox" aria-label="Sugestões de endereços"></div>
@@ -30,7 +30,7 @@ body.nav-active .panel{display:none}body.nav-active .bottom{bottom:0;left:0;righ
 <script>
 const status=document.getElementById('status'),summary=document.getElementById('summary'),dest=document.getElementById('dest');
 const SV_API='https://sv-rota1-api-production.up.railway.app';
-let trafficKey='server',trafficActive=false,lastTrafficReroute=0,trafficCheckSeq=0;let radarPoints=[],radarMarkers=[],radarLastFetch=0,radarFetchPos=null,radarAlerted=new Map(),routeChoices=[],selectedRoute=0;let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
+let trafficKey='server',trafficActive=false,lastTrafficReroute=0,trafficCheckSeq=0,trafficRetryTimer=null,trafficRetryCount=0;let radarPoints=[],radarMarkers=[],radarLastFetch=0,radarFetchPos=null,radarAlerted=new Map(),routeChoices=[],selectedRoute=0;let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-46.391,-23.963],zoom:13,pitch:48,antialias:true});
 map.addControl(new maplibregl.NavigationControl({showCompass:true}),'bottom-right');
 map.on('load',()=>{
@@ -55,7 +55,7 @@ function setNavActive(active){document.body.classList.toggle('nav-active',active
 document.getElementById('nav-voice').onclick=()=>{voiceEnabled=!voiceEnabled;localStorage.setItem('sv-voice-enabled',String(voiceEnabled));if(!voiceEnabled)stopVoice();updateVoiceButton()};
 document.getElementById('nav-cancel').onclick=()=>exitNavigation(true);
 function openRouteSearch(){const panel=document.querySelector('.panel');panel.classList.remove('collapsed');panel.classList.add('editing');dest.focus();}
-function showCompactSummary(){if(!navigating||!route)return;const meters=remainingRouteMeters()??route.distance;const duration=Math.max(0,Math.round(route.duration/60));const eta=new Date(Date.now()+duration*60000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});summary.innerHTML='<div class="nav-compact"><button id="nav-search" aria-label="Alterar destino">⌕</button><div class="nav-eta"><strong>'+Math.floor(duration/60)+' h '+duration%60+' min</strong><small id="remaining-distance">'+(meters/1000).toFixed(1).replace('.',',')+' km restantes • Chegada: '+eta+'</small></div><button id="nav-routes" aria-label="Atualizar rota">⑂</button><button id="nav-end" class="danger" aria-label="Cancelar rota">✕</button></div>';document.getElementById('nav-search').onclick=openRouteSearch;document.getElementById('nav-routes').onclick=()=>calculate(false);document.getElementById('nav-end').onclick=()=>exitNavigation(true)}
+function showCompactSummary(){if(!navigating||!route)return;const meters=remainingRouteMeters()??route.distance;const duration=Math.max(0,Math.round((route.duration||0)*Math.min(1,meters/Math.max(route.distance||1,1))/60));const eta=new Date(Date.now()+duration*60000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});summary.innerHTML='<div class="nav-compact"><button id="nav-search" aria-label="Alterar destino">⌕</button><div class="nav-eta"><strong>'+Math.floor(duration/60)+' h '+duration%60+' min</strong><small id="remaining-distance">'+(meters/1000).toFixed(1).replace('.',',')+' km restantes • Chegada: '+eta+'</small></div><button id="nav-routes" aria-label="Atualizar rota">⑂</button><button id="nav-end" class="danger" aria-label="Cancelar rota">✕</button></div>';document.getElementById('nav-search').onclick=openRouteSearch;document.getElementById('nav-routes').onclick=()=>calculate(false);document.getElementById('nav-end').onclick=()=>exitNavigation(true)}
 function speak(t){if(!voiceEnabled)return;if(window.SVRota?.speak)SVRota.speak(t);else if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';speechSynthesis.speak(u)}}
 function stopVoice(){if(window.SVRota?.stopSpeaking)SVRota.stopSpeaking();else if('speechSynthesis' in window)speechSynthesis.cancel()}
 document.querySelector('.panel h1').onclick=()=>document.querySelector('.panel').classList.toggle('collapsed');
@@ -91,8 +91,13 @@ chooseVehicle(vehicleIcon);
 function cameraFollow(){if(!pos||!follow)return;map.easeTo({center:[pos[1],pos[0]],zoom:navigating?17.7:16.5,pitch:navigating?65:48,bearing:navigating?heading:0,duration:850,essential:true,padding:navigating?{top:100,bottom:260,left:0,right:0}:{top:0,bottom:0,left:0,right:0}})}
 window.onNativeLocation=(lat,lon,bearing,speed)=>{
  if(!Number.isFinite(Number(lat))||!Number.isFinite(Number(lon))||Math.abs(Number(lat))>90||Math.abs(Number(lon))>180)return;
- const v=Number(speed);const validSpeed=speed!==null&&speed!==undefined&&speed!==''&&Number.isFinite(v)&&v>=0;document.getElementById('speed-value').textContent=validSpeed?Math.round(v*3.6):'--';document.getElementById('speedometer').classList.toggle('inactive',!validSpeed);
- const previous=pos;pos=[Number(lat),Number(lon)];
+ const previous=pos,now=Date.now();pos=[Number(lat),Number(lon)];
+ const v=Number(speed),nativeSpeed=speed!==null&&speed!==undefined&&speed!==''&&Number.isFinite(v)&&v>=0;
+ // Android speed is m/s; estimate from successive fixes only when the device supplies no speed.
+ const traveled=previous?distance(previous,pos):0,elapsed=lastFix?(now-lastFix)/1000:0;
+ const estimated=!nativeSpeed&&previous&&elapsed>=1&&elapsed<=15&&traveled>=5&&traveled/elapsed<=55?traveled/elapsed:null;
+ const speedMps=nativeSpeed?v:estimated,validSpeed=speedMps!==null&&Number.isFinite(speedMps);
+ document.getElementById('speed-value').textContent=validSpeed?Math.round(speedMps*3.6):'--';document.getElementById('speedometer').classList.toggle('inactive',!validSpeed);lastFix=now;
  const provided=Number(bearing);
  if(Number.isFinite(provided)&&bearing!==undefined&&bearing!==null&&Number(speed)>1)heading=(provided+360)%360;
  else if(previous&&distance(previous,pos)>5){const a=previous[0]*Math.PI/180,b=pos[0]*Math.PI/180,d=(pos[1]-previous[1])*Math.PI/180;heading=(Math.atan2(Math.sin(d)*Math.cos(b),Math.cos(a)*Math.sin(b)-Math.sin(a)*Math.cos(b)*Math.cos(d))*180/Math.PI+360)%360}
@@ -107,21 +112,23 @@ window.onNativeLocation=(lat,lon,bearing,speed)=>{
  if(!target)info('GPS ativo. Digite seu destino.');
  else if(navigating&&!calculating&&Date.now()-lastRouteAt>30000&&lastRecalcPos&&distance(pos,lastRecalcPos)>100)calculate(false);
 };
-document.getElementById('traffic-indicator').onclick=()=>initTraffic();
+document.getElementById('traffic-indicator').onclick=()=>{trafficRetryCount=0;initTraffic()};
+function scheduleTrafficRetry(){clearTimeout(trafficRetryTimer);const delay=Math.min(120000,5000*Math.pow(2,Math.min(trafficRetryCount++,4)));trafficRetryTimer=setTimeout(()=>{if(navigator.onLine!==false)initTraffic();else scheduleTrafficRetry()},delay)}
+window.addEventListener('online',()=>{if(!trafficActive){trafficRetryCount=0;initTraffic()}});
 async function initTraffic(){
  if(!mapReady)return;
- const check=++trafficCheckSeq;
- for(const id of ['sv-traffic-flow','sv-traffic-incidents']){if(map.getLayer(id))map.removeLayer(id);if(map.getSource(id))map.removeSource(id)}
+ clearTimeout(trafficRetryTimer);const check=++trafficCheckSeq;
+ // Keep existing raster layers while verifying a temporarily slow network.
  trafficActive=false;
  const label=document.getElementById('traffic-indicator');
  
  label.textContent='TomTom: verificando conexão…';
  document.querySelector('.panel small').textContent='Mapa 3D experimental • Verificando trânsito…';
  try{
-  map.addSource('sv-traffic-flow',{type:'raster',tiles:[SV_API+'/api/traffic/flow/{z}/{x}/{y}.png'],tileSize:256,minzoom:0,maxzoom:22});
-  map.addLayer({id:'sv-traffic-flow',type:'raster',source:'sv-traffic-flow',paint:{'raster-opacity':.8}});
-  map.addSource('sv-traffic-incidents',{type:'raster',tiles:[SV_API+'/api/traffic/incidents/{z}/{x}/{y}.png'],tileSize:256,minzoom:0,maxzoom:22});
-  map.addLayer({id:'sv-traffic-incidents',type:'raster',source:'sv-traffic-incidents',paint:{'raster-opacity':.9}});
+  if(!map.getSource('sv-traffic-flow'))map.addSource('sv-traffic-flow',{type:'raster',tiles:[SV_API+'/api/traffic/flow/{z}/{x}/{y}.png'],tileSize:256,minzoom:0,maxzoom:22});
+  if(!map.getLayer('sv-traffic-flow'))map.addLayer({id:'sv-traffic-flow',type:'raster',source:'sv-traffic-flow',paint:{'raster-opacity':.8}});
+  if(!map.getSource('sv-traffic-incidents'))map.addSource('sv-traffic-incidents',{type:'raster',tiles:[SV_API+'/api/traffic/incidents/{z}/{x}/{y}.png'],tileSize:256,minzoom:0,maxzoom:22});
+  if(!map.getLayer('sv-traffic-incidents'))map.addLayer({id:'sv-traffic-incidents',type:'raster',source:'sv-traffic-incidents',paint:{'raster-opacity':.9}});
   // Adicionar uma camada não prova que a API aceitou a chave.
   const center=pos||[-23.963,-46.391];
   const url=SV_API+'/api/traffic/check?lat='+center[0]+'&lon='+center[1];
@@ -131,9 +138,9 @@ async function initTraffic(){
    if(check!==trafficCheckSeq)return;
    if(!response.ok)throw Error('HTTP '+response.status);
    const data=await response.json();if(!data.flowSegmentData)throw Error('Resposta inválida');
-   trafficActive=true;label.textContent='TomTom: trânsito ao vivo ativo';document.querySelector('.panel small').textContent='Mapa 3D experimental • Trânsito TomTom ativo';
-  }catch(e){if(check!==trafficCheckSeq)return;trafficActive=false;label.textContent='TomTom: falha na verificação • toque aqui';document.querySelector('.panel small').textContent='Mapa 3D experimental • Trânsito não confirmado';console.warn('TomTom validation failed',e)}
- }catch(e){label.textContent='Camada de trânsito indisponível';document.querySelector('.panel small').textContent='Mapa 3D experimental • Trânsito indisponível'}
+   trafficActive=true;trafficRetryCount=0;label.textContent='TomTom: trânsito ao vivo ativo';document.querySelector('.panel small').textContent='Mapa 3D experimental • Trânsito TomTom ativo';
+  }catch(e){if(check!==trafficCheckSeq)return;trafficActive=false;label.textContent='TomTom: falha na verificação • toque aqui';document.querySelector('.panel small').textContent='Mapa 3D experimental • Trânsito não confirmado';console.warn('TomTom validation failed',e);scheduleTrafficRetry()}
+ }catch(e){label.textContent='Camada de trânsito indisponível';document.querySelector('.panel small').textContent='Mapa 3D experimental • Trânsito indisponível';scheduleTrafficRetry()}
 }
 document.getElementById('report-toggle').onclick=()=>{const menu=document.getElementById('report-menu');menu.style.display=menu.style.display==='block'?'none':'block'};
 document.querySelectorAll('[data-report]').forEach(b=>b.onclick=()=>{if(!pos){info('Aguarde GPS para registrar ocorrência.');return}const reports=JSON.parse(localStorage.getItem('sv-local-reports')||'[]');reports.push({type:b.dataset.report,lat:pos[0],lon:pos[1],time:new Date().toISOString()});localStorage.setItem('sv-local-reports',JSON.stringify(reports.slice(-100)));document.getElementById('report-menu').style.display='none';info('Ocorrência salva apenas neste aparelho. Não foi enviada a outros motoristas.')});
@@ -256,11 +263,11 @@ async function calculate(fit){
   let json=null,usingTraffic=false;
   if(trafficActive){
    try{
-    const tt=SV_API+'/api/route?'+new URLSearchParams({fromLat:pos[0],fromLon:pos[1],toLat:target[0],toLon:target[1]});
+    const tt=SV_API+'/api/route?'+new URLSearchParams({fromLat:pos[0],fromLon:pos[1],toLat:target[0],toLon:target[1],instructionsType:'text'});
     const response=await fetch(tt);
     if(response.ok){
      const data=await response.json();
-     if(data.routes?.length){json={routes:data.routes.map(r=>({distance:r.summary.lengthInMeters,duration:r.summary.travelTimeInSeconds,geometry:{type:'LineString',coordinates:r.legs.flatMap(l=>l.points.map(p=>[p.longitude,p.latitude]))},legs:[]}))};usingTraffic=true}
+     if(data.routes?.length){json={routes:data.routes.map(r=>({distance:r.summary.lengthInMeters,duration:r.summary.travelTimeInSeconds,geometry:{type:'LineString',coordinates:r.legs.flatMap(l=>l.points.map(p=>[p.longitude,p.latitude]))},legs:[{steps:(r.guidance?.instructions||[]).filter(i=>i.point&&Number.isFinite(i.point.latitude)&&Number.isFinite(i.point.longitude)).map(i=>({maneuver:{location:[i.point.longitude,i.point.latitude],type:'tomtom',instruction:i.message||i.combinedMessage||''},name:i.street||''}))}]}))};usingTraffic=true}
     }
    }catch(e){console.warn('Traffic routing unavailable',e)}
   }
@@ -291,8 +298,8 @@ function guide(force=false){
  while(nextStep<steps.length-1&&distance(pos,[steps[nextStep].maneuver.location[1],steps[nextStep].maneuver.location[0]])<25)nextStep++;
  const step=steps[nextStep],point=[step.maneuver.location[1],step.maneuver.location[0]],meters=Math.round(distance(pos,point));
  const type=step.maneuver.type,modifier=step.maneuver.modifier||'';
- const action=type==='arrive'?'Você chegou ao destino':type==='depart'?'Siga em frente':type==='roundabout'?'Entre na rotatória':modifier.includes('uturn')?'Faça o retorno':modifier.includes('left')?'Vire à esquerda':modifier.includes('right')?'Vire à direita':'Continue em frente';
- const message=type==='arrive'?action:action+' em aproximadamente '+meters+' metros';
+ const action=type==='tomtom'?(step.maneuver.instruction||'Continue pela rota'):type==='arrive'?'Você chegou ao destino':type==='depart'?'Siga em frente':type==='roundabout'?'Entre na rotatória':modifier.includes('uturn')?'Faça o retorno':modifier.includes('left')?'Vire à esquerda':modifier.includes('right')?'Vire à direita':'Continue em frente';
+ const message=type==='arrive'?action:(type==='tomtom'?action+' • '+meters+' m':action+' em aproximadamente '+meters+' metros');
  const navText=document.getElementById('nav-guidance');if(navText)navText.textContent=message;const el=document.getElementById('instruction');if(el)el.textContent=message+(trafficActive?' • TomTom conectado':' • Trânsito não confirmado');
  if(force||(nextStep!==lastSpoken&&meters<180)){speak(message);lastSpoken=nextStep}
 }
