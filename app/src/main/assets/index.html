@@ -82,10 +82,29 @@ function stopVoice(){if(window.SVRota?.stopSpeaking)SVRota.stopSpeaking();else i
 document.querySelector('.panel h1').onclick=()=>document.querySelector('.panel').classList.toggle('collapsed');
 function remainingRouteMeters(){
  if(!route?.geometry?.coordinates?.length||!pos)return null;
- const coords=route.geometry.coordinates;let closest=0,best=Infinity;
- for(let i=0;i<coords.length;i++){const d=distance(pos,[coords[i][1],coords[i][0]]);if(d<best){best=d;closest=i}}
- let meters=best;for(let i=closest;i<coords.length-1;i++)meters+=distance([coords[i][1],coords[i][0]],[coords[i+1][1],coords[i+1][0]]);
- return meters;
+ const coords=route.geometry.coordinates;
+ // Project onto the nearest road segment instead of the nearest vertex.
+ // This avoids huge remaining-distance jumps on sparse or duplicated geometry.
+ const scaleX=111320*Math.cos(pos[0]*Math.PI/180),scaleY=111320;
+ let best=Infinity,segment=0,fraction=0;
+ for(let i=0;i<coords.length-1;i++){
+  const a=coords[i],b=coords[i+1];
+  const ax=(a[0]-pos[1])*scaleX,ay=(a[1]-pos[0])*scaleY;
+  const dx=(b[0]-a[0])*scaleX,dy=(b[1]-a[1])*scaleY;
+  const denom=dx*dx+dy*dy,t=denom?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/denom)):0;
+  const d=Math.hypot(ax+t*dx,ay+t*dy);
+  if(d<best){best=d;segment=i;fraction=t}
+ }
+ let meters=distance([coords[segment][1],coords[segment][0]],[coords[segment+1][1],coords[segment+1][0]])*(1-fraction);
+ for(let i=segment+1;i<coords.length-1;i++)meters+=distance([coords[i][1],coords[i][0]],[coords[i+1][1],coords[i+1][0]]);
+ // Routing providers may return malformed/repeated polyline segments. Never
+ // show hundreds of kilometers when the route summary is under a kilometer.
+ const planned=Number(route.distance);
+ if(Number.isFinite(planned)&&planned>=0&&meters>planned*1.35+150){
+  console.warn('Route geometry differs from routing summary',{meters,planned});
+  return best>100?planned:Math.min(planned,Math.max(0,planned-distance(lastRecalcPos||pos,pos)));
+ }
+ return Math.max(0,meters);
 }
 function updateRemainingDistance(){if(navigating&&document.body.classList.contains('nav-active')){showCompactSummary();return}const el=document.getElementById('remaining-distance');if(!el||!route)return;const meters=remainingRouteMeters();if(meters===null)return;el.textContent=meters>=1000?(meters/1000).toFixed(1).replace('.',',')+' km restantes':Math.round(meters/10)*10+' m restantes';}
 function exitNavigation(clearDestination=false){
@@ -343,7 +362,7 @@ async function calculate(fit){
   if(!json.routes?.length)throw Error('Sem rota');
   if(routePreference==='shortest')json.routes.sort((a,b)=>a.distance-b.distance);
   else json.routes.sort((a,b)=>a.duration-b.duration);
-  routeChoices=json.routes;selectedRoute=0;route=routeChoices[0];steps=route.legs.flatMap(l=>l.steps||[]);nextStep=0;lastSpoken=-1;drawRoute();
+  routeChoices=json.routes.filter(r=>Number.isFinite(r.distance)&&r.distance>=0&&Number.isFinite(r.duration)&&r.duration>=0&&r.geometry?.coordinates?.length>1);if(!routeChoices.length)throw Error('Rota inválida');selectedRoute=0;route=routeChoices[0];steps=route.legs.flatMap(l=>l.steps||[]);nextStep=0;lastSpoken=-1;drawRoute();
   if(fit&&!navigating&&route.geometry.coordinates.length){const bounds=route.geometry.coordinates.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(route.geometry.coordinates[0],route.geometry.coordinates[0]));map.fitBounds(bounds,{padding:{top:260,bottom:210,left:35,right:35},pitch:45,maxZoom:16})}
   const km=(route.distance/1000).toFixed(1).replace('.',','),mins=Math.max(1,Math.round(route.duration/60));
   document.getElementById('traffic-indicator').textContent=usingTraffic?'Rota com tráfego TomTom':(trafficActive?'TomTom ativo • rota sem tráfego':'TomTom não validado • rota sem tráfego');
