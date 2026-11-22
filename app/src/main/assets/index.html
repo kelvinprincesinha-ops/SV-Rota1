@@ -177,13 +177,14 @@ async function fetchSuggestions(query){
 }
 dest.addEventListener('input',()=>{
  selectedAddress=null;searchSeq++;clearTimeout(searchTimer);searchResults=[];
+ if(target){exitNavigation(true)}
  const q=dest.value.trim();
  if(q.length<3){hideSuggestions();return}
  searchTimer=setTimeout(()=>fetchSuggestions(q),350);
 });
 dest.addEventListener('keydown',e=>{
  if(e.key==='Escape')hideSuggestions();
- if(e.key==='Enter'){e.preventDefault();if(suggestions.style.display==='block'&&searchResults.length)selectAddress(searchResults[0]);else search()}
+ if(e.key==='Enter'){e.preventDefault();search()}
 });
 document.getElementById('search').onclick=search;
 function search(){
