@@ -24,13 +24,13 @@ body.nav-active .panel{display:none}body.nav-active .bottom{bottom:0;left:0;righ
 <body><div id="map"></div>
 <div class="panel"><h1>↗ SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div><div id="suggestions" role="listbox" aria-label="Sugestões de endereços"></div>
 <div class="line"><button id="car">🚗 Carro</button><button id="moto" class="alt">🏍️ Moto</button><button id="gps" class="alt">Minha posição</button></div>
-<div class="vehicle-picker"><button id="icon-arrow" class="selected" type="button">➤ Seta</button><button id="icon-car" class="alt" type="button">🚗 Ícone carro</button><button id="icon-moto" class="alt" type="button">🏍️ Ícone moto</button></div><div id="status">Aguardando localização GPS…</div><small>Mapa 3D experimental • Trânsito TomTom em verificação</small></div>
-<button id="recenter-map" type="button" title="Centralizar e acompanhar meu carro" aria-label="Centralizar e acompanhar meu carro">⌖</button><div id="summary" class="bottom"></div><div class="nav-guidance" id="nav-guidance">Siga pela rota destacada</div><div class="nav-controls" id="nav-controls"><button id="nav-voice" title="Silenciar ou ativar voz" aria-label="Silenciar ou ativar voz">🔊</button><button id="nav-cancel" class="danger" title="Cancelar rota e voltar ao início">✕</button></div><div class="speedometer inactive" id="speedometer"><strong id="speed-value">0</strong><small>km/h</small></div><button class="report-toggle" id="report-toggle" title="Registrar ocorrência">⚠️</button><div class="report-menu" id="report-menu"><small>Registros somente neste aparelho, não são alertas ao vivo.</small><button data-report="Acidente">🚗 Acidente</button><button data-report="Trânsito parado">🚦 Trânsito parado</button><button data-report="Obras">🚧 Obras</button><button data-report="Radar observado">📷 Radar observado</button><button data-report="Perigo na via">⚠️ Perigo na via</button><button data-report="Alagamento observado">🌧️ Alagamento observado</button><button data-report="Buraco na pista">🕳️ Buraco na pista</button><button data-report="Via interditada">⛔ Via interditada</button></div><div class="traffic-indicator" id="traffic-indicator">Trânsito ao vivo: não configurado</div><div id="road-alert" class="road-alert"></div><div id="light-info" class="light-info">🚦 Semáforo: tempo indisponível</div>
+<div class="line"><label style="font-size:12px">Preferência <select id="route-preference" aria-label="Preferência de rota"><option value="fastest">Mais rápida</option><option value="shortest">Mais curta</option><option value="no-tolls">Evitar pedágios</option></select></label><button id="voice-command" type="button" class="alt" title="Comando de voz">🎙️ SV</button></div><div class="vehicle-picker"><button id="icon-arrow" class="selected" type="button">➤ Seta</button><button id="icon-car" class="alt" type="button">🚗 Ícone carro</button><button id="icon-moto" class="alt" type="button">🏍️ Ícone moto</button></div><div id="status">Aguardando localização GPS…</div><small>Mapa 3D experimental • Trânsito TomTom em verificação</small></div>
+<button id="recenter-map" type="button" title="Centralizar e acompanhar meu carro" aria-label="Centralizar e acompanhar meu carro">⌖</button><div id="summary" class="bottom"></div><div class="nav-guidance" id="nav-guidance">Siga pela rota destacada</div><div class="nav-controls" id="nav-controls"><button id="nav-voice" title="Silenciar ou ativar voz" aria-label="Silenciar ou ativar voz">🔊</button><button id="nav-cancel" class="danger" title="Cancelar rota e voltar ao início">✕</button></div><div id="speed-warning" style="display:none;position:absolute;left:12px;bottom:288px;z-index:1002;background:#752e15;color:white;padding:8px;border-radius:10px;font-weight:bold">⚠️ Confira a velocidade da via</div><div class="speedometer inactive" id="speedometer"><strong id="speed-value">0</strong><small>km/h</small></div><button class="report-toggle" id="report-toggle" title="Registrar ocorrência">⚠️</button><div class="report-menu" id="report-menu"><small>Registros somente neste aparelho, não são alertas ao vivo.</small><button data-report="Acidente">🚗 Acidente</button><button data-report="Trânsito parado">🚦 Trânsito parado</button><button data-report="Obras">🚧 Obras</button><button data-report="Radar observado">📷 Radar observado</button><button data-report="Perigo na via">⚠️ Perigo na via</button><button data-report="Alagamento observado">🌧️ Alagamento observado</button><button data-report="Buraco na pista">🕳️ Buraco na pista</button><button data-report="Via interditada">⛔ Via interditada</button></div><div class="traffic-indicator" id="traffic-indicator">Trânsito ao vivo: não configurado</div><div id="road-alert" class="road-alert"></div><div id="light-info" class="light-info">🚦 Semáforo: tempo indisponível</div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const status=document.getElementById('status'),summary=document.getElementById('summary'),dest=document.getElementById('dest');
 const SV_API='https://sv-rota1-api-production.up.railway.app';
-let trafficKey='server',trafficActive=false,lastTrafficReroute=0,trafficCheckSeq=0,trafficRetryTimer=null,trafficRetryCount=0;let radarPoints=[],radarMarkers=[],radarLastFetch=0,radarFetchPos=null,radarAlerted=new Map(),routeChoices=[],selectedRoute=0;let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
+let routePreference=localStorage.getItem('sv-route-preference')||'fastest';let lastSpeedWarning=0;let trafficKey='server',trafficActive=false,lastTrafficReroute=0,trafficCheckSeq=0,trafficRetryTimer=null,trafficRetryCount=0;let radarPoints=[],radarMarkers=[],radarLastFetch=0,radarFetchPos=null,radarAlerted=new Map(),routeChoices=[],selectedRoute=0;let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-46.391,-23.963],zoom:13,pitch:48,antialias:true});
 map.addControl(new maplibregl.NavigationControl({showCompass:true}),'bottom-right');
 map.on('load',()=>{
@@ -57,6 +57,21 @@ document.getElementById('nav-cancel').onclick=()=>exitNavigation(true);
 function openRouteSearch(){const panel=document.querySelector('.panel');panel.classList.remove('collapsed');panel.classList.add('editing');dest.focus();}
 function showCompactSummary(){if(!navigating||!route)return;const meters=remainingRouteMeters()??route.distance;const duration=Math.max(0,Math.round((route.duration||0)*Math.min(1,meters/Math.max(route.distance||1,1))/60));const eta=new Date(Date.now()+duration*60000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});summary.innerHTML='<div class="nav-compact"><button id="nav-search" aria-label="Alterar destino">⌕</button><div class="nav-eta"><strong>'+Math.floor(duration/60)+' h '+duration%60+' min</strong><small id="remaining-distance">'+(meters/1000).toFixed(1).replace('.',',')+' km restantes • Chegada: '+eta+'</small></div><button id="nav-routes" aria-label="Atualizar rota">⑂</button><button id="nav-end" class="danger" aria-label="Cancelar rota">✕</button></div>';document.getElementById('nav-search').onclick=openRouteSearch;document.getElementById('nav-routes').onclick=()=>calculate(false);document.getElementById('nav-end').onclick=()=>exitNavigation(true)}
 function speak(t){if(!voiceEnabled)return;if(window.SVRota?.speak)SVRota.speak(t);else if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';speechSynthesis.speak(u)}}
+// Voice commands are optional: Android WebView may not expose SpeechRecognition.
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+document.getElementById('voice-command').onclick=()=>{
+ if(!SpeechRecognition){info('Comandos de voz indisponíveis neste navegador.');return}
+ const recognition=new SpeechRecognition();recognition.lang='pt-BR';recognition.interimResults=false;recognition.maxAlternatives=1;
+ recognition.onresult=e=>{const phrase=(e.results[0][0].transcript||'').toLowerCase();
+  if(phrase.includes('minha posição')||phrase.includes('centralizar'))setFollow(true);
+  else if(phrase.includes('cancelar rota'))exitNavigation(true);
+  else if(phrase.includes('silenciar')){voiceEnabled=false;stopVoice();updateVoiceButton()}
+  else if(phrase.includes('ativar voz')){voiceEnabled=true;updateVoiceButton()}
+  else if(phrase.includes('posto')||phrase.includes('casa')){openRouteSearch();dest.value=phrase.includes('posto')?'posto de combustível':'';info('Escolha um endereço nas sugestões para navegar.');dest.dispatchEvent(new Event('input'))}
+  else info('Comando não reconhecido: '+phrase)
+ };
+ recognition.onerror=()=>info('Não foi possível reconhecer a voz.');recognition.start();info('🎙️ Ouvindo comando…');
+};
 function stopVoice(){if(window.SVRota?.stopSpeaking)SVRota.stopSpeaking();else if('speechSynthesis' in window)speechSynthesis.cancel()}
 document.querySelector('.panel h1').onclick=()=>document.querySelector('.panel').classList.toggle('collapsed');
 function remainingRouteMeters(){
@@ -88,7 +103,7 @@ function updateVehicle(){if(!marker)return;marker.getElement().innerHTML=vehicle
 function chooseVehicle(type){vehicleIcon=type;localStorage.setItem('sv-vehicle-icon',type);for(const t of ['arrow','car','moto'])document.getElementById('icon-'+t).className=t===type?'selected':'alt';updateVehicle()}
 for(const t of ['arrow','car','moto'])document.getElementById('icon-'+t).onclick=()=>chooseVehicle(t);
 chooseVehicle(vehicleIcon);
-function cameraFollow(){if(!pos||!follow||!mapReady)return;const opts={center:[pos[1],pos[0]],zoom:navigating?17.7:16.5,pitch:navigating?65:48,bearing:navigating?heading:0,padding:navigating?{top:100,bottom:260,left:0,right:0}:{top:0,bottom:0,left:0,right:0}};map.jumpTo(opts)}
+function cameraFollow(){if(!pos||!follow||!mapReady)return;const kmh=Number(document.getElementById('speed-value').textContent)||0;const zoom=navigating?(kmh>75?15.6:kmh>40?16.5:17.5):16.5;const opts={center:[pos[1],pos[0]],zoom,pitch:navigating?62:48,bearing:navigating?heading:0,padding:navigating?{top:100,bottom:260,left:0,right:0}:{top:0,bottom:0,left:0,right:0}};map.jumpTo(opts)}
 // Detect sustained deviations from the actual route, rather than recalculating just because the car moved.
 let offRouteFixes=0,lastOffRouteRecalc=0;
 function metersFromRoute(point){
@@ -176,6 +191,7 @@ document.querySelectorAll('[data-report]').forEach(b=>b.onclick=()=>{if(!pos){in
 let webGpsWatch=null;function startWebGps(){if(window.SVRota||!navigator.geolocation||webGpsWatch!==null)return;webGpsWatch=navigator.geolocation.watchPosition(p=>window.onNativeLocation(p.coords.latitude,p.coords.longitude,p.coords.heading,p.coords.speed),e=>info('GPS: '+e.message),{enableHighAccuracy:true,maximumAge:1000,timeout:20000});}document.addEventListener('visibilitychange',()=>{if(!document.hidden)startWebGps()});if(!window.SVRota)setTimeout(startWebGps,800);document.getElementById('gps').onclick=()=>{startWebGps();follow=true;if(pos){cameraFollow();info('GPS ativo. Centralizando sua posição.')}else{info('Solicitando GPS ao Android…');if(window.SVRota?.requestLocation)window.SVRota.requestLocation();else if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>window.onNativeLocation(p.coords.latitude,p.coords.longitude,p.coords.heading,p.coords.speed),e=>info('GPS indisponível: '+e.message),{enableHighAccuracy:true,timeout:15000,maximumAge:0});else info('GPS não disponível neste aparelho.')}};
 document.getElementById('car').onclick=()=>selectMode('car');
 document.getElementById('moto').onclick=()=>selectMode('moto');
+const prefControl=document.getElementById('route-preference');prefControl.value=routePreference;prefControl.onchange=()=>{routePreference=prefControl.value;localStorage.setItem('sv-route-preference',routePreference);if(target)calculate(true)};
 function selectMode(m){mode=m;document.getElementById('car').className=m==='car'?'':'alt';document.getElementById('moto').className=m==='moto'?'':'alt';if(target)calculate(true)}
 const suggestions=document.getElementById('suggestions');
 let selectedAddress=null,searchTimer=null,searchSeq=0,searchResults=[];
@@ -292,7 +308,7 @@ async function calculate(fit){
   let json=null,usingTraffic=false;
   if(trafficActive){
    try{
-    const tt=SV_API+'/api/route?'+new URLSearchParams({fromLat:pos[0],fromLon:pos[1],toLat:target[0],toLon:target[1],instructionsType:'text'});
+    const tt=SV_API+'/api/route?'+new URLSearchParams({fromLat:pos[0],fromLon:pos[1],toLat:target[0],toLon:target[1],instructionsType:'text',routeType:routePreference==='shortest'?'shortest':'fastest',avoidTolls:routePreference==='no-tolls'?'true':'false'});
     const response=await fetch(tt);
     if(response.ok){
      const data=await response.json();
@@ -318,11 +334,13 @@ async function calculate(fit){
    json=await res.json();
   }
   if(!json.routes?.length)throw Error('Sem rota');
+  if(routePreference==='shortest')json.routes.sort((a,b)=>a.distance-b.distance);
+  else json.routes.sort((a,b)=>a.duration-b.duration);
   routeChoices=json.routes;selectedRoute=0;route=routeChoices[0];steps=route.legs.flatMap(l=>l.steps||[]);nextStep=0;lastSpoken=-1;drawRoute();
   if(fit&&!navigating&&route.geometry.coordinates.length){const bounds=route.geometry.coordinates.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(route.geometry.coordinates[0],route.geometry.coordinates[0]));map.fitBounds(bounds,{padding:{top:260,bottom:210,left:35,right:35},pitch:45,maxZoom:16})}
   const km=(route.distance/1000).toFixed(1).replace('.',','),mins=Math.max(1,Math.round(route.duration/60));
   document.getElementById('traffic-indicator').textContent=usingTraffic?'Rota com tráfego TomTom':(trafficActive?'TomTom ativo • rota sem tráfego':'TomTom não validado • rota sem tráfego');
-  info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro)':'Carro'));
+  info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro; restrições específicas não verificadas)':'Carro')+' • '+(routePreference==='no-tolls'?'Evitar pedágios (verifique o trajeto)':routePreference==='shortest'?'Mais curta':'Mais rápida'));
   summary.style.display='block';
   summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><div id="remaining-distance" class="remaining-distance">'+km+' km restantes</div><small id="instruction">'+(usingTraffic?'Rota considera tráfego TomTom.':'Rota não considera trânsito ao vivo.')+' Respeite a sinalização.</small><div class="line"><button id="navigate">'+(navigating?'Encerrar navegação':'▶ Iniciar navegação')+'</button><button id="refresh">Atualizar rota</button><button id="cancel-route" class="alt">✕ Cancelar rota</button></div>';
   updateRemainingDistance();
