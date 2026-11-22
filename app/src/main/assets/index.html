@@ -29,7 +29,6 @@ body.nav-active .panel{display:none}body.nav-active .bottom{bottom:0;left:0;righ
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const status=document.getElementById('status'),summary=document.getElementById('summary'),dest=document.getElementById('dest');
-function loadTrafficKey(){let stored='';try{stored=window.SVRota?.getTrafficKey?.()||''}catch(e){}const legacy=localStorage.getItem('sv-tomtom-key')||'';const key=stored||legacy;if(!stored&&legacy)try{window.SVRota?.saveTrafficKey?.(legacy)}catch(e){}return key}
 const SV_API='https://sv-rota1-api-production.up.railway.app';
 let trafficKey='server',trafficActive=false,lastTrafficReroute=0,trafficCheckSeq=0;let radarPoints=[],radarMarkers=[],radarLastFetch=0,radarFetchPos=null,radarAlerted=new Map(),routeChoices=[],selectedRoute=0;let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-46.391,-23.963],zoom:13,pitch:48,antialias:true});
