@@ -3,7 +3,30 @@ plugins { id 'com.android.application' }
 android {
     namespace 'br.com.svrota'
     compileSdk 35
-    defaultConfig { applicationId 'br.com.svrota'; minSdk 24; targetSdk 35; versionCode 1; versionName '0.1.0' }
+    defaultConfig {
+        applicationId 'br.com.svrota'
+        minSdk 24
+        targetSdk 35
+        versionCode Integer.parseInt(System.getenv('SV_VERSION_CODE') ?: '1')
+        versionName System.getenv('SV_VERSION_NAME') ?: '0.1.0'
+    }
+    signingConfigs {
+        release {
+            if (System.getenv('SV_KEYSTORE_PATH')) {
+                storeFile file(System.getenv('SV_KEYSTORE_PATH'))
+                storePassword System.getenv('SV_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('SV_KEY_ALIAS')
+                keyPassword System.getenv('SV_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (System.getenv('SV_KEYSTORE_PATH')) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 
