@@ -3,19 +3,25 @@
 <title>SV Rota</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-*{box-sizing:border-box}body{margin:0;font:15px system-ui,Arial;background:#101c2c;color:white}#map{height:100dvh;width:100%}
-.panel{position:absolute;z-index:1000;top:12px;left:12px;right:12px;background:#15283beF;border:1px solid #365069;border-radius:16px;padding:12px;box-shadow:0 5px 20px #0005}
-h1{font-size:20px;margin:0 0 8px;color:#4de0bd}input{background:#fff;color:#14283a;border:0;border-radius:8px;padding:12px;min-width:0;flex:1;font-size:15px}
-.line{display:flex;gap:6px;margin:7px 0}button{background:#16ad89;color:white;border:0;border-radius:9px;padding:10px 12px;font-weight:700;font-size:14px}
-button.alt{background:#324d66}button:disabled{opacity:.5}#status{font-size:13px;line-height:1.35;color:#e2edf5}
-.bottom{position:absolute;bottom:24px;left:12px;right:12px;z-index:1000;background:#15283bef;border-radius:12px;padding:12px;display:none;box-shadow:0 4px 18px #0007}
-small{display:block;font-size:11px;color:#d3dce4;margin-top:5px}
-.leaflet-control-attribution{font-size:10px!important}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font:15px system-ui,Arial,sans-serif;background:#edf2f6;color:#172b40}#map{height:100dvh;width:100%}
+.panel{position:absolute;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;right:12px;background:#fff;border:1px solid #e4ebf0;border-radius:22px;padding:14px;box-shadow:0 8px 30px #233f5b25}
+h1{font-size:21px;letter-spacing:-.6px;margin:0 0 10px;color:#0879dd;font-weight:850}
+input{background:#f2f5f9;color:#172b40;border:1px solid #e2e8ef;border-radius:14px;padding:13px;min-width:0;flex:1;font-size:15px;outline:none}
+input:focus{border-color:#248ff0;background:#fff}.line{display:flex;gap:7px;margin:8px 0;align-items:stretch}
+button{background:#1687ed;color:white;border:0;border-radius:14px;padding:11px 13px;font-weight:750;font-size:14px;box-shadow:0 2px 4px #102b4510}
+button.alt{background:#eef3f8;color:#33485c}button:disabled{opacity:.5}
+#status{font-size:12px;line-height:1.4;color:#526b7e;margin-top:5px}.panel small{font-size:10px;color:#8493a1}
+.bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);left:12px;right:12px;z-index:1000;background:#fff;color:#142b3f;border-radius:22px;padding:17px;display:none;box-shadow:0 8px 28px #17344c35;border:1px solid #e7edf3}
+.bottom strong{font-size:21px;letter-spacing:-.5px}.bottom small{display:block;font-size:12px;color:#5c6d7c;margin:8px 0 10px}
+.leaflet-control-zoom{border:0!important;box-shadow:0 4px 16px #163f6030!important;border-radius:14px!important;overflow:hidden}
+.leaflet-control-zoom a{color:#1888eb!important}.leaflet-control-attribution{font-size:9px!important}
+.leaflet-popup-content-wrapper{border-radius:16px!important;box-shadow:0 4px 20px #1d395c30!important}
+@media(max-width:380px){.panel{padding:10px}.panel button{padding:10px 8px;font-size:12px}.panel input{padding:10px}.bottom{padding:13px}}
 </style></head>
 <body><div id="map"></div>
-<div class="panel"><h1>📍 SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div>
+<div class="panel"><h1>↗ SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div>
 <div class="line"><button id="car">🚗 Carro</button><button id="moto" class="alt">🏍️ Moto</button><button id="gps" class="alt">Minha posição</button></div>
-<div id="status">Aguardando localização GPS…</div><small>Protótipo • Moto utiliza rota de carro • Sem trânsito ao vivo</small></div>
+<div id="status">Aguardando localização GPS…</div><small>Navegação experimental • Sem trânsito ao vivo</small></div>
 <div id="summary" class="bottom"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -24,11 +30,11 @@ let pos=null, target=null, currentMarker=null, targetMarker=null, routeLayer=nul
 let navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,calculating=false,lastRecalcPos=null;
 const map=L.map('map',{zoomControl:false}).setView([-23.963,-46.391],13);
 L.control.zoom({position:'bottomright'}).addTo(map);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
 function info(s){status.textContent=s}
 window.onNativeLocation=(lat,lon)=>{
   pos=[lat,lon];
-  if(!currentMarker){currentMarker=L.circleMarker(pos,{radius:9,color:'#fff',weight:3,fillColor:'#008cf0',fillOpacity:1}).addTo(map);map.setView(pos,15)}
+  if(!currentMarker){currentMarker=L.circleMarker(pos,{radius:11,color:'#fff',weight:4,fillColor:'#1687ed',fillOpacity:1}).addTo(map);map.setView(pos,15)}
   else currentMarker.setLatLng(pos);
   if(follow && navigating) map.panTo(pos,{animate:true});
   if(navigating && steps.length) guide();
@@ -71,8 +77,8 @@ async function calculate(fit){
   steps=(r.legs||[]).flatMap(leg=>leg.steps||[]);nextStep=0;lastSpoken=-1;
   if(navigating)guide();
   if(routeLayer)map.removeLayer(routeLayer);
-  routeLayer=L.geoJSON(r.geometry,{style:{color:'#16ad89',weight:7,opacity:.85}}).addTo(map);
-  if(fit)map.fitBounds(routeLayer.getBounds(),{paddingTopLeft:[30,225],paddingBottomRight:[30,110]});
+  routeLayer=L.geoJSON(r.geometry,{style:{color:'#1687ed',weight:8,opacity:.94,lineCap:'round',lineJoin:'round'}}).addTo(map);
+  if(fit)map.fitBounds(routeLayer.getBounds(),{paddingTopLeft:[24,230],paddingBottomRight:[24,180]});
   const km=(r.distance/1000).toFixed(1).replace('.',',');
   const mins=Math.max(1,Math.round(r.duration/60));
   info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro)':'Carro'));
