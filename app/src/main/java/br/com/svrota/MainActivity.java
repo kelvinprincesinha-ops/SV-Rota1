@@ -39,12 +39,19 @@ public class MainActivity extends Activity {
     private LocationManager locations;
     private TextToSpeech tts;
     private boolean voiceReady=false;
-    private final LocationListener listener = location -> {
-        double lat = location.getLatitude(), lon = location.getLongitude();
-        runOnUiThread(() -> {
-            if (web != null) web.evaluateJavascript("window.onNativeLocation("+lat+","+lon+");", null);
-        });
-    };
+    private Location latestLocation;
+    private boolean pageReady=false;
+    private void deliverLocation(Location location) {
+        if (location == null || web == null || !pageReady) return;
+        double lat=location.getLatitude(), lon=location.getLongitude();
+        String bearing=location.hasBearing()?String.valueOf(location.getBearing()):"null";
+        String speed=location.hasSpeed()?String.valueOf(location.getSpeed()):"null";
+        web.evaluateJavascript("if(typeof window.onNativeLocation==='function')window.onNativeLocation("+lat+","+lon+","+bearing+","+speed+");", null);
+    }
+    private final LocationListener listener = location -> runOnUiThread(() -> {
+        latestLocation=location;
+        deliverLocation(location);
+    });
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         tts = new TextToSpeech(this, result -> {
@@ -83,6 +90,15 @@ public class MainActivity extends Activity {
         WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this)).build();
         web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                pageReady=false;
+            }
+            @Override public void onPageFinished(WebView view, String url) {
+                if (!url.startsWith("https://appassets.androidplatform.net/assets/")) return;
+                pageReady=true;
+                deliverLocation(latestLocation);
+                if (latestLocation == null) startGps();
+            }
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return loader.shouldInterceptRequest(request.getUrl());
             }
@@ -148,6 +164,7 @@ public class MainActivity extends Activity {
             return;
         }
         try {
+            locations.removeUpdates(listener);
             if (locations.isProviderEnabled(LocationManager.GPS_PROVIDER))
                 locations.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, listener);
             if (locations.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
