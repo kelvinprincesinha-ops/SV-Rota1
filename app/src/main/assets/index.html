@@ -45,6 +45,12 @@ map.on('load',()=>{
   }
  }catch(e){console.warn('3D buildings unavailable',e)}
  drawRoute();initTraffic();
+ // The native GPS can arrive before MapLibre finishes loading. Center on the
+ // latest fix automatically; never require a tap on "Minha posição".
+ setFollow(true);
+ if(pos){window.onNativeLocation(pos[0],pos[1],heading,null)}
+ if(window.SVRota?.requestLocation)window.SVRota.requestLocation();
+ else startWebGps();
 });
 let resumeFollowTimer=null;function setFollow(active){follow=active;const btn=document.getElementById('recenter-map');btn.classList.toggle('following',active);btn.title=active?'Acompanhamento ligado':'Voltar a acompanhar o carro';if(active){clearTimeout(resumeFollowTimer);cameraFollow()}}function suspendFollow(){if(!navigating)return;follow=false;document.getElementById('recenter-map').classList.remove('following');clearTimeout(resumeFollowTimer);resumeFollowTimer=setTimeout(()=>{if(navigating)setFollow(true)},12000)}map.on('dragstart',suspendFollow);map.on('rotatestart',suspendFollow);map.on('pitchstart',suspendFollow);document.getElementById('recenter-map').onclick=()=>setFollow(true);
 function info(t){status.textContent=t}
@@ -144,6 +150,7 @@ window.onNativeLocation=(lat,lon,bearing,speed)=>{
  const provided=Number(bearing);
  if(Number.isFinite(provided)&&bearing!==undefined&&bearing!==null&&Number(speed)>1)heading=(provided+360)%360;
  else if(previous&&distance(previous,pos)>5){const a=previous[0]*Math.PI/180,b=pos[0]*Math.PI/180,d=(pos[1]-previous[1])*Math.PI/180;heading=(Math.atan2(Math.sin(d)*Math.cos(b),Math.cos(a)*Math.sin(b)-Math.sin(a)*Math.cos(b)*Math.cos(d))*180/Math.PI+360)%360}
+ if(!mapReady)return;
  if(!marker){const el=document.createElement('div');el.className='vehicle-icon';el.innerHTML=vehicleSvg();marker=new maplibregl.Marker({element:el,rotationAlignment:'map',pitchAlignment:'map'}).setLngLat([pos[1],pos[0]]).addTo(map)}
  else marker.setLngLat([pos[1],pos[0]]);
  marker.setRotation(heading);
