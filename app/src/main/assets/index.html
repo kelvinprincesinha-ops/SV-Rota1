@@ -17,16 +17,16 @@ button.alt{background:#eef3f8;color:#33485c}button:disabled{opacity:.5}
 .leaflet-control-zoom a{color:#1888eb!important}.leaflet-control-attribution{font-size:9px!important}
 .leaflet-popup-content-wrapper{border-radius:16px!important;box-shadow:0 4px 20px #1d395c30!important}
 @media(max-width:380px){.panel{padding:10px}.panel button{padding:10px 8px;font-size:12px}.panel input{padding:10px}.bottom{padding:13px}}
-</style></head>
+.panel{background:#0b2034ee;color:#fff;border-color:#27689d;padding:10px}.panel h1{color:#5bc2ff;font-size:19px}.panel input{background:#20364b;color:#fff}.panel small,#status{color:#b6cee0!important}.panel .line{margin:5px 0}.panel button{padding:9px}.bottom{background:#0b2034f2;color:#fff;border-color:#2478b4;padding:12px}.bottom small{color:#b5d1e7}.vehicle-icon,.vehicle-icon svg{width:62px;height:72px}.panel.collapsed .line,.panel.collapsed .vehicle-picker,.panel.collapsed #status,.panel.collapsed small{display:none}.panel.collapsed{right:auto}.panel h1{cursor:pointer}.light-info{position:absolute;right:14px;top:45%;z-index:999;background:#0b2034ed;color:#fff;border:1px solid #2778b3;border-radius:12px;padding:8px;font-size:12px;display:none}</style></head>
 <body><div id="map"></div>
 <div class="panel"><h1>↗ SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div>
 <div class="line"><button id="car">🚗 Carro</button><button id="moto" class="alt">🏍️ Moto</button><button id="gps" class="alt">Minha posição</button></div>
 <div class="vehicle-picker"><button id="icon-arrow" class="selected" type="button">➤ Seta</button><button id="icon-car" class="alt" type="button">🚗 Ícone carro</button><button id="icon-moto" class="alt" type="button">🏍️ Ícone moto</button></div><div id="status">Aguardando localização GPS…</div><small>Mapa 3D experimental • Sem trânsito ao vivo</small></div>
-<div id="summary" class="bottom"></div>
+<div id="summary" class="bottom"></div><div id="light-info" class="light-info">🚦 Semáforo: tempo indisponível</div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const status=document.getElementById('status'),summary=document.getElementById('summary'),dest=document.getElementById('dest');
-let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'arrow',heading=0,lastFix=null;
+let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-46.391,-23.963],zoom:13,pitch:48,antialias:true});
 map.addControl(new maplibregl.NavigationControl({showCompass:true}),'bottom-right');
 map.on('load',()=>{
@@ -47,8 +47,9 @@ function info(t){status.textContent=t}
 function distance(a,b){const R=6371000,rad=Math.PI/180,dLat=(b[0]-a[0])*rad,dLon=(b[1]-a[1])*rad;const h=Math.sin(dLat/2)**2+Math.cos(a[0]*rad)*Math.cos(b[0]*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 function speak(t){if(window.SVRota?.speak)SVRota.speak(t);else if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';speechSynthesis.speak(u)}}
 function stopVoice(){if(window.SVRota?.stopSpeaking)SVRota.stopSpeaking();else if('speechSynthesis' in window)speechSynthesis.cancel()}
+document.querySelector('.panel h1').onclick=()=>document.querySelector('.panel').classList.toggle('collapsed');
 function vehicleSvg(){
- if(vehicleIcon==='car')return '<svg viewBox="0 0 48 48"><path d="M12 14 Q13 7 19 7 H29 Q35 7 36 14 L39 31 Q39 37 33 38 H15 Q9 37 9 31Z" fill="#1687ed" stroke="#fff" stroke-width="2.5"/><path d="M16 15H32L34 23H14Z" fill="#b9e7ff"/><path d="M15 31H20M28 31H33" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>';
+ if(vehicleIcon==='car')return '<svg viewBox="0 0 80 96"><defs><linearGradient id="carpaint" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#80dfff"/><stop offset=".5" stop-color="#138ce8"/><stop offset="1" stop-color="#003a85"/></linearGradient></defs><ellipse cx="40" cy="85" rx="30" ry="9" fill="#00aaff" opacity=".35"/><path d="M22 18Q24 8 40 8Q56 8 58 18L66 39V73Q65 83 55 86H25Q15 83 14 73V39Z" fill="url(#carpaint)" stroke="#d9f7ff" stroke-width="2"/><path d="M25 23Q40 16 55 23L60 41H20Z" fill="#a3e4ff" stroke="#fff"/><path d="M21 46H59L56 65H24Z" fill="#135d9c" stroke="#4dbfff"/><path d="M20 73H30M50 73H60" stroke="#ff4a4a" stroke-width="6" stroke-linecap="round"/><path d="M16 39L9 44M64 39L71 44" stroke="#cdefff" stroke-width="4"/></svg>';
  if(vehicleIcon==='moto')return '<svg viewBox="0 0 48 48"><path d="M24 5L31 15L29 30L24 43L19 30L17 15Z" fill="#1687ed" stroke="#fff" stroke-width="2.5"/><path d="M13 16L35 16M19 10L29 10" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M20 28H28" stroke="#b9e7ff" stroke-width="4"/></svg>';
  return '<svg viewBox="0 0 48 48"><path d="M24 3L43 43L24 34L5 43Z" fill="#1687ed" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>';
 }
@@ -114,7 +115,7 @@ async function calculate(fit){
   info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro)':'Carro'));
   summary.style.display='block';
   summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><small id="instruction">Sem trânsito ao vivo. Respeite a sinalização.</small><div class="line"><button id="navigate">'+(navigating?'Encerrar navegação':'▶ Iniciar navegação')+'</button><button id="refresh">Atualizar rota</button></div>';
-  document.getElementById('navigate').onclick=()=>{navigating=!navigating;follow=true;document.getElementById('navigate').textContent=navigating?'Encerrar navegação':'▶ Iniciar navegação';if(navigating){cameraFollow();speak('Iniciando rota para '+destinationName+'.');setTimeout(()=>guide(true),3500)}else{stopVoice();info('Navegação encerrada.')}};
+  document.getElementById('navigate').onclick=()=>{navigating=!navigating;follow=true;document.getElementById('navigate').textContent=navigating?'Encerrar navegação':'▶ Iniciar navegação';if(navigating){document.querySelector('.panel').classList.add('collapsed');document.getElementById('light-info').style.display='block';cameraFollow();speak('Iniciando rota para '+destinationName+'.');setTimeout(()=>guide(true),3500)}else{document.getElementById('light-info').style.display='none';stopVoice();info('Navegação encerrada.')}};
   document.getElementById('refresh').onclick=()=>calculate(true);
  }catch(e){info('Serviço de rotas indisponível. Tente novamente.')}
  finally{calculating=false}
