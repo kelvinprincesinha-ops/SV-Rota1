@@ -1,0 +1,25 @@
+name: Build iOS
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ios/**'
+      - 'app/src/main/assets/index.html'
+      - '.github/workflows/ios-build.yml'
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: cd ios && xcodegen generate
+      - name: Build unsigned iOS simulator app
+        run: |
+          xcodebuild -project ios/SVRota.xcodeproj -scheme SVRota -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO build
+      - name: Upload simulator build
+        uses: actions/upload-artifact@v4
+        with:
+          name: SV-Rota-iOS-Simulator
+          path: ios/build/Build/Products/Debug-iphonesimulator/SVRota.app
