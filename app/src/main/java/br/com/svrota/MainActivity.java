@@ -1,6 +1,16 @@
 package br.com.svrota;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.net.Uri;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -54,6 +64,9 @@ public class MainActivity extends Activity {
             @JavascriptInterface public void saveTrafficKey(String key) {
                 getSharedPreferences("sv_rota_settings", Context.MODE_PRIVATE).edit().putString("tomtom_key", key == null ? "" : key.trim()).apply();
             }
+            @JavascriptInterface public void checkUpdates() {
+                runOnUiThread(() -> checkForUpdates(true));
+            }
             @JavascriptInterface public void requestLocation() {
                 runOnUiThread(() -> startGps());
             }
@@ -79,6 +92,54 @@ public class MainActivity extends Activity {
         web.loadUrl("https://appassets.androidplatform.net/assets/index.html");
         locations = (LocationManager) getSystemService(LOCATION_SERVICE);
         startGps();
+        checkForUpdates(false);
+    }
+    private void checkForUpdates(boolean manual) {
+        new Thread(() -> {
+            HttpURLConnection conn = null;
+            try {
+                conn = (HttpURLConnection) new URL("https://api.github.com/repos/kelvinprincesinha-ops/SV-Rota1/releases/latest").openConnection();
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
+                conn.setRequestProperty("Accept", "application/vnd.github+json");
+                conn.setRequestProperty("User-Agent", "SV-Rota-Android");
+                if (conn.getResponseCode() != 200) throw new Exception("HTTP " + conn.getResponseCode());
+                InputStream in = conn.getInputStream();
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int n;
+                while ((n = in.read(buffer)) != -1 && bytes.size() < 262144) bytes.write(buffer, 0, n);
+                in.close();
+                JSONObject release = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+                String tag = release.optString("tag_name", "");
+                if (!tag.matches("android-[0-9]+")) throw new Exception("Versão desconhecida");
+                int latest = Integer.parseInt(tag.substring(8));
+                int installed = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+                JSONArray assets = release.optJSONArray("assets");
+                String apkUrl = "";
+                if (assets != null) for (int i=0;i<assets.length();i++) {
+                    JSONObject asset = assets.getJSONObject(i);
+                    if ("SV-Rota1.apk".equals(asset.optString("name"))) {
+                        apkUrl = asset.optString("browser_download_url", "");
+                        break;
+                    }
+                }
+                final String downloadUrl = apkUrl;
+                if (!downloadUrl.startsWith("https://github.com/kelvinprincesinha-ops/SV-Rota1/releases/download/")) throw new Exception("APK não encontrado");
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (latest > installed) new AlertDialog.Builder(this)
+                        .setTitle("Atualização do SV Rota")
+                        .setMessage("Nova versão #" + latest + " disponível. Instalada: #" + installed + ". Deseja baixar o APK para atualizar?")
+                        .setNegativeButton("Depois", null)
+                        .setPositiveButton("Baixar atualização", (dialog, which) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))))
+                        .show();
+                    else if (manual) Toast.makeText(this, "SV Rota já está atualizado", Toast.LENGTH_LONG).show();
+                });
+            } catch (Exception e) {
+                if (manual) runOnUiThread(() -> Toast.makeText(this, "Não foi possível verificar atualizações", Toast.LENGTH_LONG).show());
+            } finally { if (conn != null) conn.disconnect(); }
+        }).start();
     }
     private void startGps() {
         if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
