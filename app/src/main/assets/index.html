@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>SV Rota</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font:15px system-ui,Arial,sans-serif;background:#edf2f6;color:#172b40}#map{height:100dvh;width:100%}
 .panel{position:absolute;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;right:12px;background:#fff;border:1px solid #e4ebf0;border-radius:22px;padding:14px;box-shadow:0 8px 30px #233f5b25}
@@ -21,28 +21,42 @@ button.alt{background:#eef3f8;color:#33485c}button:disabled{opacity:.5}
 <body><div id="map"></div>
 <div class="panel"><h1>↗ SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div>
 <div class="line"><button id="car">🚗 Carro</button><button id="moto" class="alt">🏍️ Moto</button><button id="gps" class="alt">Minha posição</button></div>
-<div id="status">Aguardando localização GPS…</div><small>Navegação experimental • Sem trânsito ao vivo</small></div>
+<div id="status">Aguardando localização GPS…</div><small>Mapa 3D experimental • Sem trânsito ao vivo</small></div>
 <div id="summary" class="bottom"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
-const status=document.getElementById('status'), summary=document.getElementById('summary'), dest=document.getElementById('dest');
-let pos=null, target=null, currentMarker=null, targetMarker=null, routeLayer=null, mode='car', lastRouteAt=0;
-let navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,calculating=false,lastRecalcPos=null;
-const map=L.map('map',{zoomControl:false}).setView([-23.963,-46.391],13);
-L.control.zoom({position:'bottomright'}).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
-function info(s){status.textContent=s}
-window.onNativeLocation=(lat,lon)=>{
-  pos=[lat,lon];
-  if(!currentMarker){currentMarker=L.circleMarker(pos,{radius:11,color:'#fff',weight:4,fillColor:'#1687ed',fillOpacity:1}).addTo(map);map.setView(pos,15)}
-  else currentMarker.setLatLng(pos);
-  if(follow && navigating) map.panTo(pos,{animate:true});
-  if(navigating && steps.length) guide();
-  if(!target) info('GPS ativo. Digite seu destino.');
-  else if(navigating && Date.now()-lastRouteAt>30000 && lastRecalcPos && map.distance(pos,lastRecalcPos)>100) calculate(false);
-};
-document.getElementById('gps').onclick=()=>{follow=true;if(pos)map.setView(pos,17);else {info('Solicitando GPS…');SVRota.requestLocation()}};
+const status=document.getElementById('status'),summary=document.getElementById('summary'),dest=document.getElementById('dest');
+let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='';
+const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-46.391,-23.963],zoom:13,pitch:48,antialias:true});
+map.addControl(new maplibregl.NavigationControl({showCompass:true}),'bottom-right');
+map.on('load',()=>{
+ mapReady=true;
+ try{
+  const style=map.getStyle();
+  const source=Object.keys(style.sources).find(k=>style.sources[k].type==='vector');
+  if(source && !map.getLayer('sv-3d-buildings')){
+   const layers=style.layers||[];
+   const firstLabel=layers.find(l=>l.type==='symbol'&&l.layout&&l.layout['text-field']);
+   map.addLayer({id:'sv-3d-buildings',type:'fill-extrusion',source,'source-layer':'building',minzoom:14,paint:{'fill-extrusion-color':'#cbd7e2','fill-extrusion-height':['coalesce',['get','render_height'],['get','height'],8],'fill-extrusion-base':['coalesce',['get','render_min_height'],0],'fill-extrusion-opacity':0.65}},firstLabel?.id);
+  }
+ }catch(e){console.warn('3D buildings unavailable',e)}
+ drawRoute();
+});
 map.on('dragstart',()=>{follow=false});
+function info(t){status.textContent=t}
+function distance(a,b){const R=6371000,rad=Math.PI/180,dLat=(b[0]-a[0])*rad,dLon=(b[1]-a[1])*rad;const h=Math.sin(dLat/2)**2+Math.cos(a[0]*rad)*Math.cos(b[0]*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function speak(t){if(window.SVRota?.speak)SVRota.speak(t);else if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';speechSynthesis.speak(u)}}
+function stopVoice(){if(window.SVRota?.stopSpeaking)SVRota.stopSpeaking();else if('speechSynthesis' in window)speechSynthesis.cancel()}
+window.onNativeLocation=(lat,lon)=>{
+ pos=[lat,lon];
+ if(!marker){const el=document.createElement('div');el.style.cssText='width:23px;height:23px;background:#1687ed;border:4px solid white;border-radius:50%;box-shadow:0 0 0 7px #1687ed35,0 2px 12px #1236';marker=new maplibregl.Marker({element:el}).setLngLat([lon,lat]).addTo(map);map.easeTo({center:[lon,lat],zoom:16,pitch:48})}
+ else marker.setLngLat([lon,lat]);
+ if(follow&&navigating)map.easeTo({center:[lon,lat],zoom:17,pitch:60,duration:800});
+ if(navigating&&steps.length)guide();
+ if(!target)info('GPS ativo. Digite seu destino.');
+ else if(navigating&&Date.now()-lastRouteAt>30000&&lastRecalcPos&&distance(pos,lastRecalcPos)>100)calculate(false);
+};
+document.getElementById('gps').onclick=()=>{follow=true;if(pos)map.easeTo({center:[pos[1],pos[0]],zoom:17,pitch:60});else{info('Solicitando GPS…');window.SVRota?.requestLocation()}};
 document.getElementById('car').onclick=()=>selectMode('car');
 document.getElementById('moto').onclick=()=>selectMode('moto');
 function selectMode(m){mode=m;document.getElementById('car').className=m==='car'?'':'alt';document.getElementById('moto').className=m==='moto'?'':'alt';if(target)calculate(true)}
@@ -52,56 +66,53 @@ async function search(){
  const q=dest.value.trim();if(q.length<3){info('Digite pelo menos 3 caracteres.');return}
  info('Procurando endereço…');
  try{
-  const u='https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q+', São Vicente, São Paulo');
-  let res=await fetch(u,{headers:{'Accept':'application/json'}});
+  let res=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q+', São Vicente, São Paulo'));
   if(!res.ok)throw Error('Busca indisponível');
   let data=await res.json();
-  if(!data.length){const u2='https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q);res=await fetch(u2);data=await res.json()}
-  if(!data.length){info('Endereço não encontrado. Tente rua, número e cidade.');return}
-  target=[Number(data[0].lat),Number(data[0].lon)];
-  if(targetMarker)map.removeLayer(targetMarker);
-  targetMarker=L.marker(target).addTo(map).bindPopup(data[0].display_name).openPopup();
-  map.setView(target,15);
+  if(!data.length){res=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q));data=await res.json()}
+  if(!data.length){info('Endereço não encontrado.');return}
+  target=[+data[0].lat,+data[0].lon];destinationName=data[0].name||q;
+  if(targetMarker)targetMarker.remove();
+  targetMarker=new maplibregl.Marker({color:'#1687ed'}).setLngLat([target[1],target[0]]).addTo(map);
   calculate(true);
- }catch(e){info('Não foi possível buscar. Verifique a internet e tente novamente.')}
+ }catch(e){info('Busca indisponível. Verifique sua conexão.')}
+}
+function drawRoute(){
+ if(!mapReady||!route)return;
+ const data={type:'Feature',properties:{},geometry:route.geometry};
+ if(map.getSource('sv-route'))map.getSource('sv-route').setData(data);
+ else{
+  map.addSource('sv-route',{type:'geojson',data});
+  map.addLayer({id:'sv-route-border',type:'line',source:'sv-route',paint:{'line-color':'#ffffff','line-width':12,'line-opacity':0.95},layout:{'line-cap':'round','line-join':'round'}});
+  map.addLayer({id:'sv-route-line',type:'line',source:'sv-route',paint:{'line-color':'#1687ed','line-width':8},layout:{'line-cap':'round','line-join':'round'}});
+ }
 }
 async function calculate(fit){
- if(!pos){info('Destino encontrado. Aguardando permissão e sinal GPS…');return}
- if(calculating)return;
- calculating=true;lastRouteAt=Date.now();lastRecalcPos=pos.slice();info('Calculando rota…');
+ if(!pos){info('Aguardando localização GPS…');return}
+ if(calculating)return;calculating=true;lastRouteAt=Date.now();lastRecalcPos=pos.slice();info('Calculando rota…');
  try{
   const url='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=true';
   const res=await fetch(url);if(!res.ok)throw Error('Roteador indisponível');
   const json=await res.json();if(json.code!=='Ok'||!json.routes?.length)throw Error('Sem rota');
-  const r=json.routes[0];
-  steps=(r.legs||[]).flatMap(leg=>leg.steps||[]);nextStep=0;lastSpoken=-1;
-  if(navigating)guide();
-  if(routeLayer)map.removeLayer(routeLayer);
-  routeLayer=L.geoJSON(r.geometry,{style:{color:'#1687ed',weight:8,opacity:.94,lineCap:'round',lineJoin:'round'}}).addTo(map);
-  if(fit)map.fitBounds(routeLayer.getBounds(),{paddingTopLeft:[24,230],paddingBottomRight:[24,180]});
-  const km=(r.distance/1000).toFixed(1).replace('.',',');
-  const mins=Math.max(1,Math.round(r.duration/60));
+  route=json.routes[0];steps=route.legs.flatMap(l=>l.steps||[]);nextStep=0;lastSpoken=-1;drawRoute();
+  if(fit&&route.geometry.coordinates.length){const bounds=route.geometry.coordinates.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(route.geometry.coordinates[0],route.geometry.coordinates[0]));map.fitBounds(bounds,{padding:{top:260,bottom:210,left:35,right:35},pitch:45,maxZoom:16})}
+  const km=(route.distance/1000).toFixed(1).replace('.',','),mins=Math.max(1,Math.round(route.duration/60));
   info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro)':'Carro'));
   summary.style.display='block';
-  summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><small id="instruction">Estimativa sem trânsito ao vivo. Siga as placas e leis de trânsito.</small><div class="line"><button id="navigate">'+(navigating?'Encerrar navegação':'▶ Iniciar navegação')+'</button><button id="refresh">Atualizar rota</button></div>';
-  document.getElementById('navigate').onclick=()=>{navigating=!navigating;follow=true;document.getElementById('navigate').textContent=navigating?'Encerrar navegação':'▶ Iniciar navegação';if(navigating){map.setView(pos,17);guide(true)}else{speechSynthesis.cancel();info('Navegação encerrada.')}};
+  summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><small id="instruction">Sem trânsito ao vivo. Respeite a sinalização.</small><div class="line"><button id="navigate">'+(navigating?'Encerrar navegação':'▶ Iniciar navegação')+'</button><button id="refresh">Atualizar rota</button></div>';
+  document.getElementById('navigate').onclick=()=>{navigating=!navigating;follow=true;document.getElementById('navigate').textContent=navigating?'Encerrar navegação':'▶ Iniciar navegação';if(navigating){map.easeTo({center:[pos[1],pos[0]],zoom:17,pitch:60});speak('Iniciando rota para '+destinationName+'.');setTimeout(()=>guide(true),3500)}else{stopVoice();info('Navegação encerrada.')}};
   document.getElementById('refresh').onclick=()=>calculate(true);
  }catch(e){info('Serviço de rotas indisponível. Tente novamente.')}
  finally{calculating=false}
 }
-function speak(message){
- if(!('speechSynthesis' in window))return;
- speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(message);u.lang='pt-BR';u.rate=0.95;speechSynthesis.speak(u);
-}
 function guide(force=false){
  if(!navigating||!pos||!steps.length)return;
- while(nextStep<steps.length-1 && map.distance(pos,[steps[nextStep].maneuver.location[1],steps[nextStep].maneuver.location[0]])<25)nextStep++;
- const step=steps[nextStep],point=[step.maneuver.location[1],step.maneuver.location[0]],distance=Math.round(map.distance(pos,point));
+ while(nextStep<steps.length-1&&distance(pos,[steps[nextStep].maneuver.location[1],steps[nextStep].maneuver.location[0]])<25)nextStep++;
+ const step=steps[nextStep],point=[step.maneuver.location[1],step.maneuver.location[0]],meters=Math.round(distance(pos,point));
  const type=step.maneuver.type,modifier=step.maneuver.modifier||'';
- let action=type==='arrive'?'Você chegou ao destino':type==='depart'?'Siga em frente':type==='roundabout'?'Entre na rotatória':modifier.includes('left')?'Vire à esquerda':modifier.includes('right')?'Vire à direita':modifier.includes('uturn')?'Faça o retorno':'Continue em frente';
- const message=type==='arrive'?action:action+' em aproximadamente '+distance+' metros';
- const el=document.getElementById('instruction');if(el)el.textContent=message+' • Trânsito ao vivo indisponível';
- if(force|| (nextStep!==lastSpoken && distance<180)){speak(message);lastSpoken=nextStep}
+ const action=type==='arrive'?'Você chegou ao destino':type==='depart'?'Siga em frente':type==='roundabout'?'Entre na rotatória':modifier.includes('uturn')?'Faça o retorno':modifier.includes('left')?'Vire à esquerda':modifier.includes('right')?'Vire à direita':'Continue em frente';
+ const message=type==='arrive'?action:action+' em aproximadamente '+meters+' metros';
+ const el=document.getElementById('instruction');if(el)el.textContent=message+' • Sem trânsito ao vivo';
+ if(force||(nextStep!==lastSpoken&&meters<180)){speak(message);lastSpoken=nextStep}
 }
-
 </script></body></html>
