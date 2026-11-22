@@ -8,7 +8,7 @@ const API='https://api.tomtom.com';
 const buckets=new Map();
 function allowed(ip,isTile){const now=Date.now(),key=(isTile?'tile:':'api:')+ip,entry=buckets.get(key)||{count:0,reset:now+60000};if(now>entry.reset){entry.count=0;entry.reset=now+60000}entry.count++;buckets.set(key,entry);if(buckets.size>10000)for(const [k,v] of buckets)if(now>v.reset)buckets.delete(k);return entry.count<=Number(isTile?(process.env.TILE_RATE_LIMIT_PER_MINUTE||600):(process.env.RATE_LIMIT_PER_MINUTE||90))}
 const coord=(x,max)=>x!==null&&x!==''&&Number.isFinite(Number(x))&&Math.abs(Number(x))<=max;
-const sendManifest=res=>{res.writeHead(200,{'Content-Type':'application/manifest+json; charset=utf-8','Cache-Control':'public,max-age=3600'});res.end(JSON.stringify({name:'SV Rota',short_name:'SV Rota',start_url:'/app',scope:'/',display:'standalone',background_color:'#0b2034',theme_color:'#0b2034',description:'Navegação SV Rota para iPhone e Android'}))};
+const sendManifest=res=>{res.writeHead(200,{'Content-Type':'application/manifest+json; charset=utf-8','Cache-Control':'public,max-age=3600'});res.end(JSON.stringify({name:'SV Rota',short_name:'SV Rota',start_url:'/app',scope:'/',display:'standalone',background_color:'#0b2034',theme_color:'#0b2034',description:'Navegação SV Rota para iPhone e Android',icons:[{src:'/icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]}))};
 const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify(body))};
 http.createServer(async(req,res)=>{
  const u=new URL(req.url||'/', 'http://localhost');
@@ -19,6 +19,8 @@ http.createServer(async(req,res)=>{
   try{const html=await readFile(resolve(root,'app/src/main/assets/index.html'));res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});return res.end(html)}catch(e){return send(res,503,{error:'web_app_unavailable'})}
  }
  if(u.pathname==='/manifest.webmanifest')return sendManifest(res);
+ if(u.pathname==='/icon.svg'){res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'public,max-age=86400'});return res.end('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#0b2034"/><circle cx="96" cy="96" r="65" fill="none" stroke="#22a7ff" stroke-width="9"/><path d="M96 38 132 145 96 123 60 145Z" fill="#65c8ff" stroke="white" stroke-width="5" stroke-linejoin="round"/></svg>')}
+
  if(u.pathname==='/sw.js'){res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-cache'});return res.end("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));")}
 
  if(!u.pathname.startsWith('/api/'))return send(res,404,{error:'not_found'});
