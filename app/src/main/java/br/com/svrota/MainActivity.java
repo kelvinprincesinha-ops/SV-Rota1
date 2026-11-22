@@ -2,6 +2,7 @@ package br.com.svrota;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Build;
 import android.content.pm.PackageManager;
@@ -47,6 +48,12 @@ public class MainActivity extends Activity {
         web.getSettings().setAllowFileAccess(false);
         web.getSettings().setAllowContentAccess(false);
         web.addJavascriptInterface(new Object() {
+            @JavascriptInterface public String getTrafficKey() {
+                return getSharedPreferences("sv_rota_settings", Context.MODE_PRIVATE).getString("tomtom_key", "");
+            }
+            @JavascriptInterface public void saveTrafficKey(String key) {
+                getSharedPreferences("sv_rota_settings", Context.MODE_PRIVATE).edit().putString("tomtom_key", key == null ? "" : key.trim()).apply();
+            }
             @JavascriptInterface public void requestLocation() {
                 runOnUiThread(() -> startGps());
             }
