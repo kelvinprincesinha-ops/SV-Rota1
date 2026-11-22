@@ -1,12 +1,49 @@
 import http from 'node:http';
-const port=Number(process.env.PORT||3000);
-const server=http.createServer(async(req,res)=>{
- const url=new URL(req.url||'/', 'http://localhost');
- const send=(status,data)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(data));};
- if(req.method!=='GET')return send(405,{error:'method_not_allowed'});
- if(url.pathname==='/health')return send(200,{status:'ok',service:'SV Rota1'});
- // Public API is deliberately disabled until rate limits and secret configuration are ready.
- if(url.pathname.startsWith('/api/'))return send(503,{error:'traffic_service_not_configured'});
- return send(404,{error:'not_found'});
-});
-server.listen(port,'0.0.0.0',()=>console.log('SV Rota1 server listening on '+port));
+const PORT=Number(process.env.PORT||3000);
+const API='https://api.tomtom.com';
+const buckets=new Map();
+function allowed(ip){const now=Date.now(),entry=buckets.get(ip)||{count:0,reset:now+60000};if(now>entry.reset){entry.count=0;entry.reset=now+60000}entry.count++;buckets.set(ip,entry);if(buckets.size>10000)for(const [k,v] of buckets)if(now>v.reset)buckets.delete(k);return entry.count<=Number(process.env.RATE_LIMIT_PER_MINUTE||90)}
+const coord=(x,max)=>x!==null&&x!==''&&Number.isFinite(Number(x))&&Math.abs(Number(x))<=max;
+const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify(body))};
+http.createServer(async(req,res)=>{
+ const u=new URL(req.url||'/', 'http://localhost');
+ if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,OPTIONS'});return res.end()}
+ if(req.method!=='GET')return send(res,405,{error:'method_not_allowed'});
+ if(u.pathname==='/health')return send(res,200,{status:'ok',service:'SV Rota1',trafficConfigured:!!process.env.TOMTOM_API_KEY});
+ if(!u.pathname.startsWith('/api/'))return send(res,404,{error:'not_found'});
+ if(!process.env.TOMTOM_API_KEY)return send(res,503,{error:'traffic_service_not_configured'});
+ const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim();
+ if(!allowed(ip))return send(res,429,{error:'rate_limited'});
+ let upstream;
+ if(u.pathname==='/api/traffic/check'){
+  if(!coord(u.searchParams.get('lat'),90)||!coord(u.searchParams.get('lon'),180))return send(res,400,{error:'invalid_coordinates'});
+  upstream=new URL(API+'/traffic/services/4/flowSegmentData/relative0/10/json');
+  upstream.searchParams.set('point',u.searchParams.get('lat')+','+u.searchParams.get('lon'));
+ }else if(u.pathname==='/api/route'){
+  const names=['fromLat','fromLon','toLat','toLon'];
+  if(names.some((k,i)=>!coord(u.searchParams.get(k),i%2===0?90:180)))return send(res,400,{error:'invalid_coordinates'});
+  upstream=new URL(API+'/routing/1/calculateRoute/'+names.map(k=>u.searchParams.get(k)).slice(0,2).join(',')+':'+names.map(k=>u.searchParams.get(k)).slice(2).join(',')+'/json');
+  upstream.searchParams.set('traffic','true');upstream.searchParams.set('routeType','fastest');upstream.searchParams.set('travelMode','car');
+ }else if(u.pathname.startsWith('/api/search/')){
+  const query=decodeURIComponent(u.pathname.slice('/api/search/'.length));
+  if(query.length<2||query.length>160)return send(res,400,{error:'invalid_query'});
+  upstream=new URL(API+'/search/2/search/'+encodeURIComponent(query)+'.json');
+  for(const k of ['limit','countrySet','language','typeahead','lat','lon','radius'])if(u.searchParams.has(k))upstream.searchParams.set(k,u.searchParams.get(k));
+  upstream.searchParams.set('limit','8');upstream.searchParams.set('countrySet','BR');
+ }else{
+  const match=u.pathname.match(/^\/api\/traffic\/(flow|incidents)\/(\d{1,2})\/(\d+)\/(\d+)\.png$/);
+  if(!match)return send(res,404,{error:'not_found'});
+  const z=Number(match[2]),x=Number(match[3]),y=Number(match[4]);
+  if(z>22||x>=2**z||y>=2**z)return send(res,400,{error:'invalid_tile'});
+  upstream=new URL(API+'/traffic/map/4/tile/'+(match[1]==='flow'?'flow/relative0':'incidents/s3')+'/'+z+'/'+x+'/'+y+'.png');
+ }
+ upstream.searchParams.set('key',process.env.TOMTOM_API_KEY);
+ try{
+  const response=await fetch(upstream,{signal:AbortSignal.timeout(10000)});
+  if(!response.ok)return send(res,response.status>=500?502:response.status,{error:'provider_error',status:response.status});
+  const type=response.headers.get('content-type')||'application/octet-stream';
+  res.writeHead(200,{'Content-Type':type,'Access-Control-Allow-Origin':'*','Cache-Control':u.pathname.endsWith('.png')?'public,max-age=30':'no-store'});
+  for await(const chunk of response.body)res.write(chunk);
+  res.end();
+ }catch(e){if(!res.headersSent)send(res,502,{error:'upstream_unavailable'});else res.end()}
+}).listen(PORT,'0.0.0.0',()=>console.log('SV Rota1 API listening on '+PORT));
