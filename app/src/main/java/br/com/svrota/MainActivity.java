@@ -41,6 +41,8 @@ public class MainActivity extends Activity {
     private boolean voiceReady=false;
     private Location latestLocation;
     private boolean pageReady=false;
+    private long lastAcceptedFixTime=0;
+    private float lastAcceptedAccuracy=Float.MAX_VALUE;
     private void deliverLocation(Location location) {
         if (location == null || web == null || !pageReady) return;
         double lat=location.getLatitude(), lon=location.getLongitude();
@@ -49,7 +51,16 @@ public class MainActivity extends Activity {
         web.evaluateJavascript("if(typeof window.onNativeLocation==='function')window.onNativeLocation("+lat+","+lon+","+bearing+","+speed+");", null);
     }
     private final LocationListener listener = location -> runOnUiThread(() -> {
-        latestLocation=location;
+        if (location == null) return;
+        // Ignore stale cached/network fixes after a newer GPS fix.
+        long fixTime = location.getTime();
+        if (fixTime > 0 && fixTime < lastAcceptedFixTime - 1500) return;
+        if (location.hasAccuracy() && location.getAccuracy() > 150f) return;
+        if (fixTime > 0 && fixTime <= lastAcceptedFixTime &&
+                location.hasAccuracy() && location.getAccuracy() >= lastAcceptedAccuracy) return;
+        latestLocation = location;
+        lastAcceptedFixTime = Math.max(lastAcceptedFixTime, fixTime);
+        lastAcceptedAccuracy = location.hasAccuracy() ? location.getAccuracy() : Float.MAX_VALUE;
         deliverLocation(location);
     });
     @Override public void onCreate(Bundle state) {
@@ -166,12 +177,12 @@ public class MainActivity extends Activity {
         try {
             locations.removeUpdates(listener);
             if (locations.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                locations.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, listener);
+                locations.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, listener);
             if (locations.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-                locations.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000, 3, listener);
+                locations.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 0, listener);
             Location last = locations.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if (last == null) last = locations.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            if (last != null) listener.onLocationChanged(last);
+            if (last != null && System.currentTimeMillis() - last.getTime() < 15000) listener.onLocationChanged(last);
         } catch (SecurityException e) { Toast.makeText(this, "Permita acesso à localização", Toast.LENGTH_LONG).show(); }
     }
     @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
