@@ -178,7 +178,7 @@ window.onNativeLocation=(lat,lon,bearing,speed)=>{
  if(navigating&&steps.length)guide();
  if(navigating)updateRemainingDistance();
  if(navigating&&target&&Date.now()-lastTrafficReroute>180000&&!calculating){lastTrafficReroute=Date.now();calculate(false)};
- checkRadarAlerts();if(!radarFetchPos||distance(pos,radarFetchPos)>4500||Date.now()-radarLastFetch>900000)loadRoadData();
+ loadCommunityHazards();checkRadarAlerts();if(!radarFetchPos||distance(pos,radarFetchPos)>4500||Date.now()-radarLastFetch>900000)loadRoadData();
  if(!target)info('GPS ativo. Digite seu destino.');
  // Off-route recalculation is handled by checkRouteDeviation().
 };
@@ -213,7 +213,40 @@ async function initTraffic(){
  }catch(e){label.textContent='Camada de trânsito indisponível';document.querySelector('.panel small').textContent='Mapa 3D experimental • Trânsito indisponível';scheduleTrafficRetry()}
 }
 document.getElementById('report-toggle').onclick=()=>{const menu=document.getElementById('report-menu');menu.style.display=menu.style.display==='block'?'none':'block'};
-document.querySelectorAll('[data-report]').forEach(b=>b.onclick=()=>{if(!pos){info('Aguarde GPS para registrar ocorrência.');return}const reports=JSON.parse(localStorage.getItem('sv-local-reports')||'[]');reports.push({type:b.dataset.report,lat:pos[0],lon:pos[1],time:new Date().toISOString()});localStorage.setItem('sv-local-reports',JSON.stringify(reports.slice(-100)));document.getElementById('report-menu').style.display='none';info('Ocorrência salva apenas neste aparelho. Não foi enviada a outros motoristas.')});
+// Shared warnings are unverified, expire on the server and never change routing automatically.
+let hazardMarkers=[],hazardFetchAt=0,hazardFetchPosition=null,hazardWarned=new Map();
+const hazardIcons={'Alagamento observado':'🌧️','Buraco na pista':'🕳️','Via interditada':'⛔','Acidente':'🚗','Trânsito parado':'🚦','Obras':'🚧','Radar observado':'📷','Perigo na via':'⚠️'};
+async function loadCommunityHazards(){
+ if(!pos||!mapReady)return;
+ if(Date.now()-hazardFetchAt<45000&&hazardFetchPosition&&distance(pos,hazardFetchPosition)<600)return;
+ hazardFetchAt=Date.now();hazardFetchPosition=pos.slice();
+ try{
+  const response=await fetch(SV_API+'/api/reports?'+new URLSearchParams({lat:pos[0],lon:pos[1]}));
+  if(!response.ok)return;
+  const data=await response.json();
+  hazardMarkers.forEach(m=>m.remove());hazardMarkers=[];
+  for(const item of data.reports||[]){
+   const el=document.createElement('div');el.textContent=hazardIcons[item.type]||'⚠️';el.style.cssText='font-size:25px;background:#132a3eea;border:2px solid #f3bd53;border-radius:50%;padding:5px';
+   el.title=item.type+' — relato de usuário, não verificado';
+   hazardMarkers.push(new maplibregl.Marker({element:el}).setLngLat([item.lon,item.lat]).addTo(map));
+   const meters=distance(pos,[item.lat,item.lon]);
+   if(navigating&&meters<250&&meters>25&&(!hazardWarned.has(item.id)||Date.now()-hazardWarned.get(item.id)>300000)){
+    hazardWarned.set(item.id,Date.now());info('⚠️ Relato não verificado: '+item.type+' a '+Math.round(meters)+' m');
+    speak('Atenção. Relato não verificado de '+item.type+' nas proximidades. Confira a via.');
+   }
+  }
+ }catch(e){console.warn('Community alerts unavailable',e)}
+}
+document.querySelectorAll('[data-report]').forEach(b=>b.onclick=async()=>{
+ if(!pos){info('Aguarde GPS para registrar ocorrência.');return}
+ const type=b.dataset.report;
+ document.getElementById('report-menu').style.display='none';
+ try{
+  const response=await fetch(SV_API+'/api/reports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,lat:pos[0],lon:pos[1]})});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  info('Relato compartilhado por até 45 min, sem verificação.');hazardFetchAt=0;loadCommunityHazards();
+ }catch(e){info('Não foi possível compartilhar o relato. Tente novamente mais tarde.');}
+});
 let webGpsWatch=null;function startWebGps(){if(window.SVRota||!navigator.geolocation||webGpsWatch!==null)return;webGpsWatch=navigator.geolocation.watchPosition(p=>window.onNativeLocation(p.coords.latitude,p.coords.longitude,p.coords.heading,p.coords.speed),e=>info('GPS: '+e.message),{enableHighAccuracy:true,maximumAge:1000,timeout:20000});}document.addEventListener('visibilitychange',()=>{if(!document.hidden)startWebGps()});if(!window.SVRota)setTimeout(startWebGps,800);document.getElementById('gps').onclick=()=>{startWebGps();follow=true;if(pos){cameraFollow();info('GPS ativo. Centralizando sua posição.')}else{info('Solicitando GPS ao Android…');if(window.SVRota?.requestLocation)window.SVRota.requestLocation();else if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>window.onNativeLocation(p.coords.latitude,p.coords.longitude,p.coords.heading,p.coords.speed),e=>info('GPS indisponível: '+e.message),{enableHighAccuracy:true,timeout:15000,maximumAge:0});else info('GPS não disponível neste aparelho.')}};
 document.getElementById('car').onclick=()=>selectMode('car');
 document.getElementById('moto').onclick=()=>selectMode('moto');
