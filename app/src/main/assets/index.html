@@ -17,16 +17,16 @@ button.alt{background:#eef3f8;color:#33485c}button:disabled{opacity:.5}
 .leaflet-control-zoom a{color:#1888eb!important}.leaflet-control-attribution{font-size:9px!important}
 .leaflet-popup-content-wrapper{border-radius:16px!important;box-shadow:0 4px 20px #1d395c30!important}
 @media(max-width:380px){.panel{padding:10px}.panel button{padding:10px 8px;font-size:12px}.panel input{padding:10px}.bottom{padding:13px}}
-.panel{background:#0b2034ee;color:#fff;border-color:#27689d;padding:10px}.panel h1{color:#5bc2ff;font-size:19px}.panel input{background:#20364b;color:#fff}.panel small,#status{color:#b6cee0!important}.panel .line{margin:5px 0}.panel button{padding:9px}.bottom{background:#0b2034f2;color:#fff;border-color:#2478b4;padding:12px}.bottom small{color:#b5d1e7}.vehicle-icon,.vehicle-icon svg{width:62px;height:72px}.panel.collapsed .line,.panel.collapsed .vehicle-picker,.panel.collapsed #status,.panel.collapsed small{display:none}.panel.collapsed{right:auto}.panel h1{cursor:pointer}.light-info{position:absolute;right:14px;top:45%;z-index:999;background:#0b2034ed;color:#fff;border:1px solid #2778b3;border-radius:12px;padding:8px;font-size:12px;display:none}.speedometer{position:absolute;z-index:999;left:12px;bottom:190px;background:#0a1e32ee;border:2px solid #1aa2ff;color:#fff;border-radius:50%;width:92px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 18px #0008}.speedometer strong{font-size:31px;line-height:1}.speedometer small{font-size:13px}.report-toggle{position:absolute;z-index:999;right:12px;bottom:190px;border-radius:50%;font-size:23px}.report-menu{position:absolute;z-index:999;right:12px;bottom:250px;background:#0a1e32f5;border:1px solid #259cfa;border-radius:14px;padding:8px;display:none;max-width:230px}.report-menu button{display:block;width:100%;text-align:left;margin:3px 0;background:#203e5b}.report-menu small{color:#d4e7fa}.speedometer.inactive{opacity:.65}</style></head>
+.panel{background:#0b2034ee;color:#fff;border-color:#27689d;padding:10px}.panel h1{color:#5bc2ff;font-size:19px}.panel input{background:#20364b;color:#fff}.panel small,#status{color:#b6cee0!important}.panel .line{margin:5px 0}.panel button{padding:9px}.bottom{background:#0b2034f2;color:#fff;border-color:#2478b4;padding:12px}.bottom small{color:#b5d1e7}.vehicle-icon,.vehicle-icon svg{width:62px;height:72px}.panel.collapsed .line,.panel.collapsed .vehicle-picker,.panel.collapsed #status,.panel.collapsed small{display:none}.panel.collapsed{right:auto}.panel h1{cursor:pointer}.light-info{position:absolute;right:14px;top:45%;z-index:999;background:#0b2034ed;color:#fff;border:1px solid #2778b3;border-radius:12px;padding:8px;font-size:12px;display:none}.speedometer{position:absolute;z-index:999;left:12px;bottom:190px;background:#0a1e32ee;border:2px solid #1aa2ff;color:#fff;border-radius:50%;width:92px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 18px #0008}.speedometer strong{font-size:31px;line-height:1}.speedometer small{font-size:13px}.report-toggle{position:absolute;z-index:999;right:12px;bottom:190px;border-radius:50%;font-size:23px}.report-menu{position:absolute;z-index:999;right:12px;bottom:250px;background:#0a1e32f5;border:1px solid #259cfa;border-radius:14px;padding:8px;display:none;max-width:230px}.report-menu button{display:block;width:100%;text-align:left;margin:3px 0;background:#203e5b}.report-menu small{color:#d4e7fa}.speedometer.inactive{opacity:.65}.road-alert{position:absolute;z-index:999;left:110px;bottom:195px;background:#10263df2;color:#fff;border:1px solid #4bb5ff;border-radius:12px;padding:8px;font-size:12px;max-width:190px}.road-alert:empty{display:none}.route-options{display:flex;gap:6px;overflow-x:auto;margin-top:5px}.route-options button{font-size:11px;padding:7px;white-space:nowrap}.radar-marker{background:#fff;border:3px solid #d52d2d;border-radius:50%;padding:5px;font-size:19px;box-shadow:0 2px 8px #0008}.radar-marker:after{content:'📷'}</style></head>
 <body><div id="map"></div>
 <div class="panel"><h1>↗ SV Rota</h1><div class="line"><input id="dest" placeholder="Digite o destino ou endereço"><button id="search">Buscar</button></div>
 <div class="line"><button id="car">🚗 Carro</button><button id="moto" class="alt">🏍️ Moto</button><button id="gps" class="alt">Minha posição</button></div>
 <div class="vehicle-picker"><button id="icon-arrow" class="selected" type="button">➤ Seta</button><button id="icon-car" class="alt" type="button">🚗 Ícone carro</button><button id="icon-moto" class="alt" type="button">🏍️ Ícone moto</button></div><div id="status">Aguardando localização GPS…</div><small>Mapa 3D experimental • Sem trânsito ao vivo</small></div>
-<div id="summary" class="bottom"></div><div class="speedometer inactive" id="speedometer"><strong id="speed-value">--</strong><small>km/h</small></div><button class="report-toggle" id="report-toggle" title="Registrar ocorrência">⚠️</button><div class="report-menu" id="report-menu"><small>Registros somente neste aparelho, não são alertas ao vivo.</small><button data-report="Acidente">🚗 Acidente</button><button data-report="Trânsito parado">🚦 Trânsito parado</button><button data-report="Obras">🚧 Obras</button><button data-report="Radar observado">📷 Radar observado</button><button data-report="Perigo na via">⚠️ Perigo na via</button></div><div id="light-info" class="light-info">🚦 Semáforo: tempo indisponível</div>
+<div id="summary" class="bottom"></div><div class="speedometer inactive" id="speedometer"><strong id="speed-value">--</strong><small>km/h</small></div><button class="report-toggle" id="report-toggle" title="Registrar ocorrência">⚠️</button><div class="report-menu" id="report-menu"><small>Registros somente neste aparelho, não são alertas ao vivo.</small><button data-report="Acidente">🚗 Acidente</button><button data-report="Trânsito parado">🚦 Trânsito parado</button><button data-report="Obras">🚧 Obras</button><button data-report="Radar observado">📷 Radar observado</button><button data-report="Perigo na via">⚠️ Perigo na via</button></div><div id="road-alert" class="road-alert"></div><div id="light-info" class="light-info">🚦 Semáforo: tempo indisponível</div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const status=document.getElementById('status'),summary=document.getElementById('summary'),dest=document.getElementById('dest');
-let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
+let radarPoints=[],radarMarkers=[],radarLastFetch=0,radarFetchPos=null,radarAlerted=new Map(),routeChoices=[],selectedRoute=0;let pos=null,target=null,mode='car',navigating=false,follow=true,steps=[],nextStep=0,lastSpoken=-1,lastRouteAt=0,calculating=false,lastRecalcPos=null,route=null,marker=null,targetMarker=null,mapReady=false,destinationName='',vehicleIcon=localStorage.getItem('sv-vehicle-icon')||'car',heading=0,lastFix=null;
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-46.391,-23.963],zoom:13,pitch:48,antialias:true});
 map.addControl(new maplibregl.NavigationControl({showCompass:true}),'bottom-right');
 map.on('load',()=>{
@@ -69,6 +69,7 @@ window.onNativeLocation=(lat,lon,bearing,speed)=>{
  marker.setRotation(heading);
  if(follow)cameraFollow();
  if(navigating&&steps.length)guide();
+ checkRadarAlerts();if(!radarFetchPos||distance(pos,radarFetchPos)>4500||Date.now()-radarLastFetch>900000)loadRoadData();
  if(!target)info('GPS ativo. Digite seu destino.');
  else if(navigating&&!calculating&&Date.now()-lastRouteAt>30000&&lastRecalcPos&&distance(pos,lastRecalcPos)>100)calculate(false);
 };
@@ -105,19 +106,46 @@ function drawRoute(){
   map.addLayer({id:'sv-route-line',type:'line',source:'sv-route',paint:{'line-color':'#1687ed','line-width':8},layout:{'line-cap':'round','line-join':'round'}});
  }
 }
+async function loadRoadData(){
+ if(!pos||Date.now()-radarLastFetch<120000)return;
+ radarLastFetch=Date.now();radarFetchPos=pos.slice();
+ // OpenStreetMap data is community maintained and can be missing or outdated.
+ const lat=pos[0],lon=pos[1],delta=.065;
+ const query='[out:json][timeout:18];(node["highway"="speed_camera"]('+ (lat-delta)+','+(lon-delta)+','+(lat+delta)+','+(lon+delta)+');node["enforcement"="maxspeed"]('+(lat-delta)+','+(lon-delta)+','+(lat+delta)+','+(lon+delta)+'););out center 150;';
+ try{
+  const response=await fetch('https://overpass.kumi.systems/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(query)});
+  if(!response.ok)throw Error('Radar data unavailable');
+  const json=await response.json();
+  radarPoints=(json.elements||[]).filter(e=>Number.isFinite(e.lat)&&Number.isFinite(e.lon)).map(e=>({id:e.id,lat:e.lat,lon:e.lon,limit:e.tags?.maxspeed||null}));
+  radarMarkers.forEach(m=>m.remove());radarMarkers=[];
+  radarPoints.forEach(p=>{const el=document.createElement('div');el.className='radar-marker';el.title='Radar cadastrado no OpenStreetMap (não verificado)';radarMarkers.push(new maplibregl.Marker({element:el}).setLngLat([p.lon,p.lat]).addTo(map))});
+ }catch(e){console.warn('OSM radar lookup unavailable',e)}
+}
+function checkRadarAlerts(){
+ if(!pos||!navigating)return;
+ const near=radarPoints.map(p=>({...p,meters:distance(pos,[p.lat,p.lon])})).filter(p=>p.meters<450).sort((a,b)=>a.meters-b.meters)[0];
+ const box=document.getElementById('road-alert');
+ if(!near){box.textContent='';return}
+ box.textContent='📷 Radar cadastrado no OSM a '+Math.round(near.meters)+' m'+(near.limit?' • cadastro: '+near.limit:'')+' • não verificado';
+ if(!radarAlerted.has(near.id)||Date.now()-radarAlerted.get(near.id)>300000){
+  speak('Atenção, possível radar cadastrado a aproximadamente '+Math.round(near.meters)+' metros. Confira a sinalização.');
+  radarAlerted.set(near.id,Date.now());
+ }
+}
 async function calculate(fit){
  if(!pos){info('Aguardando localização GPS…');return}
  if(calculating)return;calculating=true;lastRouteAt=Date.now();lastRecalcPos=pos.slice();info('Calculando rota…');
  try{
-  const url='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=true';
+  const url='https://router.project-osrm.org/route/v1/driving/'+pos[1]+','+pos[0]+';'+target[1]+','+target[0]+'?overview=full&geometries=geojson&steps=true&alternatives=3';
   const res=await fetch(url);if(!res.ok)throw Error('Roteador indisponível');
   const json=await res.json();if(json.code!=='Ok'||!json.routes?.length)throw Error('Sem rota');
-  route=json.routes[0];steps=route.legs.flatMap(l=>l.steps||[]);nextStep=0;lastSpoken=-1;drawRoute();
+  routeChoices=json.routes;selectedRoute=0;route=routeChoices[0];steps=route.legs.flatMap(l=>l.steps||[]);nextStep=0;lastSpoken=-1;drawRoute();
   if(fit&&!navigating&&route.geometry.coordinates.length){const bounds=route.geometry.coordinates.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(route.geometry.coordinates[0],route.geometry.coordinates[0]));map.fitBounds(bounds,{padding:{top:260,bottom:210,left:35,right:35},pitch:45,maxZoom:16})}
   const km=(route.distance/1000).toFixed(1).replace('.',','),mins=Math.max(1,Math.round(route.duration/60));
   info('Rota calculada • '+(mode==='moto'?'Moto (trajeto de carro)':'Carro'));
   summary.style.display='block';
   summary.innerHTML='<strong>'+km+' km • aproximadamente '+mins+' min</strong><small id="instruction">Sem trânsito ao vivo. Respeite a sinalização.</small><div class="line"><button id="navigate">'+(navigating?'Encerrar navegação':'▶ Iniciar navegação')+'</button><button id="refresh">Atualizar rota</button></div>';
+  if(routeChoices.length>1){const options=document.createElement('div');options.className='route-options';routeChoices.forEach((r,i)=>{const b=document.createElement('button');b.textContent='Rota '+(i+1)+' • '+Math.round(r.duration/60)+' min';b.className=i===selectedRoute?'':'alt';b.onclick=()=>{selectedRoute=i;route=r;steps=route.legs.flatMap(l=>l.steps||[]);nextStep=0;lastSpoken=-1;drawRoute();options.querySelectorAll('button').forEach((x,j)=>x.className=j===i?'':'alt');summary.querySelector('strong').textContent=(route.distance/1000).toFixed(1).replace('.',',')+' km • aproximadamente '+Math.round(route.duration/60)+' min';if(navigating)guide(true)};options.appendChild(b)});summary.appendChild(options)}
   document.getElementById('navigate').onclick=()=>{navigating=!navigating;follow=true;document.getElementById('navigate').textContent=navigating?'Encerrar navegação':'▶ Iniciar navegação';if(navigating){document.querySelector('.panel').classList.add('collapsed');document.getElementById('light-info').style.display='block';cameraFollow();speak('Iniciando rota para '+destinationName+'.');setTimeout(()=>guide(true),3500)}else{document.getElementById('light-info').style.display='none';stopVoice();info('Navegação encerrada.')}};
   document.getElementById('refresh').onclick=()=>calculate(true);
  }catch(e){info('Serviço de rotas indisponível. Tente novamente.')}
