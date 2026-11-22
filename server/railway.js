@@ -37,7 +37,7 @@ http.createServer(async(req,res)=>{
   const names=['fromLat','fromLon','toLat','toLon'];
   if(names.some((k,i)=>!coord(u.searchParams.get(k),i%2===0?90:180)))return send(res,400,{error:'invalid_coordinates'});
   upstream=new URL(API+'/routing/1/calculateRoute/'+names.map(k=>u.searchParams.get(k)).slice(0,2).join(',')+':'+names.map(k=>u.searchParams.get(k)).slice(2).join(',')+'/json');
-  upstream.searchParams.set('traffic','true');upstream.searchParams.set('routeType','fastest');upstream.searchParams.set('travelMode','car');
+  upstream.searchParams.set('traffic','true');upstream.searchParams.set('routeType',u.searchParams.get('routeType')==='shortest'?'shortest':'fastest');upstream.searchParams.set('travelMode','car');if(u.searchParams.get('avoidTolls')==='true')upstream.searchParams.set('avoid','tollRoads');
  }else if(u.pathname.startsWith('/api/search/')){
   const query=decodeURIComponent(u.pathname.slice('/api/search/'.length));
   if(query.length<2||query.length>160)return send(res,400,{error:'invalid_query'});
