@@ -1,0 +1,29 @@
+name: SVRota
+options:
+  bundleIdPrefix: br.com
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  SVRota:
+    type: application
+    platform: iOS
+    sources:
+      - path: SVRota
+      - path: ../app/src/main/assets/index.html
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: br.com.svrota.ios
+        SWIFT_VERSION: 5.9
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_KEY_CFBundleDisplayName: SV Rota
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: O SV Rota utiliza sua localização para acompanhar o veículo e orientar a navegação.
+        INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: O SV Rota utiliza sua localização durante a navegação.
+        INFOPLIST_KEY_UIBackgroundModes: ""
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+schemes:
+  SVRota:
+    build:
+      targets:
+        SVRota: all
